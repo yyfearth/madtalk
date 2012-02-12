@@ -1,4 +1,4 @@
-MaDChat
+MadChat
 =======
 
 # Description
