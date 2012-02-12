@@ -1,0 +1,6 @@
+name: 'madtalk'
+description: 'MadTalk'
+version: '0.0.1'
+dependencies:
+  'socket.io': '>=0.8.7'
+  'stylus': '>=0.19.0'
