@@ -2,10 +2,14 @@
 (function() {
   var channel;
 
-  channel = io.connect();
+  channel = io.connect('/0');
 
-  channel.on('connect', function() {
-    return channel.emit('hi!');
+  channel.on('connected', function(id) {
+    return console.log('connected', id);
+  });
+
+  channel.on('message', function(data) {
+    return console.log(data);
   });
 
   $(function() {});
