@@ -16,7 +16,7 @@ html ->
 
     # coffeescript ->
     #   $(document).ready ->
-    #     alert 'hi!'        
+    #     alert 'hi!'
 
     # style '''
     #   header, nav, section, article, aside, footer {display: block}

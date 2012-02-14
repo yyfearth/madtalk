@@ -9,22 +9,6 @@ io.set 'transports', [
 
 port = 8008
 
-channels = []
-channels.index = {}
-
-id = '/0' # test
-
-channel = io
-  .of(id)
-  .on 'connection', (socket) ->
-    msg = that: 'only'
-    msg[id] = 'will get'
-    socket.emit 'message', msg
-
-    msg = everyone: 'in'
-    msg[id] = 'will get'
-    channel.emit 'message', msg
-
 app.configure ->
     app.use express.static __dirname + '/public'
     app.set 'view engine', 'coffee'
@@ -39,6 +23,51 @@ app.get '/', (req, res) ->
 
 app.get /^\/[\w\-]+\/?$/, (req, res) -> # '.' is not allowed
   res.render 'index' #, locals: port : port
+
+channels = []
+channels.index = {}
+
+id = 0 # test
+
+channel = io.of('/' + id)
+# channel.users = []
+# channel.users.index = {}
+
+channel.on 'connection', (socket) ->
+  console.log 'a user conn, wait for login ...', socket.id
+  socket.on 'login', (user, callback) ->
+    # if user is valid
+    return callback err: 'invalid user' unless user.nick
+
+    # valid user
+    # if user.id && channel.users.index[id]?
+    #   ouser = channel.users.index[id]
+    #   delete channel.users.index[id]
+    #   ouser.nick = user.nick # overwrite
+    #   user = ouser # pick org user info
+    #   user.uid = socket.id
+    # else
+    #   user.uid = socket.id
+    #   channel.users.push user # add user to list
+    # channel.users.index[user.uid] = user # build index
+
+    # broadcast one user connected
+    # broadcasting means sending a message to everyone ELSE
+    socket.broadcast.emit 'online', user
+    # listen and re-broadcast messages
+    socket.on 'message', (data, callback) ->
+      data.user = user
+      console.log data
+      # broadcasting means sending a message to everyone ELSE
+      socket.broadcast.emit 'message', data
+      callback yes
+
+    socket.on 'disconnect', ->
+      socket.broadcast.emit 'offline', user
+      # todo: drop res
+
+    # callback to user for successful login
+    callback user
 
 app.listen port
 console.log "app listening on port #{port} ..."
