@@ -33,7 +33,7 @@ class DeskNotifier
 			notification = api.createNotification(iconPath, title, content)
 			@list.push(notification)
 
-			### TODO: check bug
+			### TODO: check issue #13
 			notification.content = content
 			console.log "#{content} in"
 			notification.addEventListener('close', (e) ->
