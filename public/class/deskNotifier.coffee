@@ -1,23 +1,62 @@
+"use strict"
 api = window.webkitNotifications
 
-# The static class controls desktop notification
+###
+The static class controls desktop notification
+###
 class DeskNotifier
 	@list: []
-	# Ask for desktop notification permission.
-	# callback: (isEnabled) ->
-	@askPermission: (callback) ->
+
+	###
+	Ask for desktop notification permission.
+	onAnswer: (isEnabled)
+	###
+	@askPermission: (onAnswer) ->
 		if not @isSupported or @isEnabled
 			return
 
 		api.requestPermission(->
-			if typeof callback is 'function'
-				callback(@isEnabled)
+			if typeof onAnswer is 'function'
+				onAnswer(@isEnabled)
 			)
 
-	# Used for notifying.
-	@notify: (iconPath, title, content, timeout, isClickToCancel) ->
+	###
+	Pop out a notification
+	(parameterObj)
+	(content)
+	(title, content)
+	(iconPath, title, content, timeout, isClickToCancel)
+	###
+	@notify: (a, b, c, d, e) ->
 		if not @isSupported
 			return
+
+		if a? and typeof a is 'object'
+			iconPath = a.iconPath
+			title = a.title
+			content = a.content
+			timeout = a.timeout
+			isClickToCancel = a.isClickToCancel
+		else
+			iconPath = ''
+			isClickToCancel = e or true
+
+			if not b?
+				content = a
+			else if not c?
+				title = a
+				content = b
+			else
+				iconPath = a
+				title = b
+				content = c
+				timeout = d
+
+		# Default value
+		iconPath = iconPath ? ''
+		title = title ? ''
+		content = content ? ''
+		isClickToCancel = if isClickToCancel is true then true or false
 
 		if @isEnabled
 			@_notify(iconPath, title, content, timeout, isClickToCancel)
@@ -27,72 +66,73 @@ class DeskNotifier
 					@_notify(iconPath, title, content, timeout, isClickToCancel)
 			)
 
-	# Used for notifying.
-	@_notify: (iconPath = '', title = '', content = '', timeout, isClickToCancel = true) ->
-		if @isEnabled
-			notification = api.createNotification(iconPath, title, content)
-			@list.push(notification)
+	###
+	Private, pop out a notification
+	###
+	@_notify: (iconPath, title, content, timeout, isClickToCancel) ->
+		notification = api.createNotification(iconPath, title, content)
+		@list.push(notification)
 
-			### TODO: check issue #13
-			notification.content = content
-			console.log "#{content} in"
-			notification.addEventListener('close', (e) ->
-				console.log DeskNotifier.list
-				console.log "#{this.content} out"
-				index = DeskNotifier.list.indexOf(notification)
+		notification.addEventListener('close', (e) ->
+			index = DeskNotifier.list.indexOf(notification)
 
-				if index >= 0
-					DeskNotifier.list.splice(index, 1)
+			if index >= 0
+				DeskNotifier.list.splice(index, 1)
+		)
+
+		notification.addEventListener('error', (e) ->
+			console.log('error', DeskNotifier.list)
+			index = DeskNotifier.list.indexOf(notification)
+
+			if index >= 0
+				DeskNotifier.list.splice(index, 1)
+		)
+
+		if isClickToCancel
+			notification.addEventListener('click', ->				
+				notification.cancel()
 			)
-			###
+		
+		if typeof timeout is 'number' and timeout > 0
+			setTimeout(->
+				notification.cancel()
+			, timeout)
 
-			notification.addEventListener('error', (e) ->
-				console.log 'error', DeskNotifier.list
-				index = DeskNotifier.list.indexOf(notification)
+		notification.show()
 
-				if index >= 0
-					DeskNotifier.list.splice(index, 1)
-			)
-
-			if isClickToCancel
-				notification.addEventListener('click', ->				
-					notification.cancel()
-				)
-			
-			if typeof timeout is 'number' and timeout > 0
-				setTimeout(->
-					notification.cancel()
-				, timeout)
-
-			notification.show()
-
-# Accessor Properties
+###
+Accessor Properties
+###
 Object.defineProperties(DeskNotifier, {
+	###
+	Whether the browser supports the feature.
+	###
 	isSupported:
 		get: ->
 			return api?
+	###
+	Whether the browser permits desktop notification.
+	###
 	isEnabled:
 		get: ->
 			return api? and api.checkPermission() is 0
 })
 
 ### Unit Test ###
-console.log(DeskNotifier.isSupported)
-console.log(DeskNotifier.isEnabled)
-
 window.DeskNotifier = DeskNotifier
 
 list = [
-	-> DeskNotifier.notify('https://developer.mozilla.org/favicon.ico', 'Should have icon', 1, 3000, true)
-	-> DeskNotifier.notify(null, 'No icon', 2, 3000, true)
-	-> DeskNotifier.notify(undefined, 'No icon', 3, 3000, true)
-	-> DeskNotifier.notify('', null, '4. no title', 3000, true)
-	-> DeskNotifier.notify('', undefined, '5. no title', 3000, true)
-	-> DeskNotifier.notify('', 'No timeout, click me', 6, null, true)
-	-> DeskNotifier.notify('', 'No timeout, click me', 7, undefined, true)
-	-> DeskNotifier.notify('', 'no timeout, click me', 8, true, true)
-	-> DeskNotifier.notify('', 'Click is useless and no timeout', 9, false, false)
-	-> DeskNotifier.notify('', 'Click is useless', 10, 5000, false)
+	-> DeskNotifier.notify({
+		iconPath: 'https://developer.mozilla.org/favicon.ico'
+		title: 'Wait 5 seconds'
+		content: 'Pass parameters as an object'
+		timeout: 5000
+		isClickToCancel: false
+	})
+	-> DeskNotifier.notify('https://developer.mozilla.org/favicon.ico', 'title', '3s', 3000)
+	-> DeskNotifier.notify('click me')
+	-> DeskNotifier.notify('title', 'click me')
+	-> DeskNotifier.notify('https://developer.mozilla.org/favicon.ico', 'title', 'click icon')
 ]
 
 sync = (list,  timeout) ->
