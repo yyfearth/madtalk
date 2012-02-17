@@ -1,9 +1,8 @@
-
-/*
-Static class to play sound effects.
-*/
-
 (function() {
+  'use strict';
+  /*
+  Static class to play sound effects.
+  */
   var AudioNotifier;
 
   AudioNotifier = (function() {
