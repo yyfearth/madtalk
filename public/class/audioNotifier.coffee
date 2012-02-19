@@ -14,7 +14,7 @@ class AudioNotifier
 	]
 
 	###
-	Play a sound.
+	Play a sound. If the previous sound is not finished, they will be played together.
 	[
 		@para numOrName:number the number of track to play
 	]
@@ -41,12 +41,12 @@ $ ->
 	list = [
 		[
 			->
-				AudioNotifier.play(1)
+				AudioNotifier.play 1
 			1000
 		]
 		[
 			->
-				AudioNotifier.play('major')
+				AudioNotifier.play 'major'
 			1000
 		]
 		[
@@ -56,12 +56,12 @@ $ ->
 		]
 		[
 			->
-				AudioNotifier.play(124124)
+				AudioNotifier.play 124124
 			0
 		]
 		[
 			->
-				AudioNotifier.play('Hello world')
+				AudioNotifier.play 'Hello world'
 			0
 		]
 	]
@@ -70,10 +70,10 @@ $ ->
 		if item = list.shift()
 			item[0]()
 			if list.length > 0
-				setTimeout(->
-					sync(list)
-				, item[1])
+				setTimeout ->
+					sync list
+				, item[1]
 
 	sync(list)
 
-	console.log("Expect to see two errors below.")
+	console.log "Expect to see two errors below."

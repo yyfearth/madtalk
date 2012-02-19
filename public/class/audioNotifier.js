@@ -16,7 +16,7 @@
     AudioNotifier.listMusic = ['friendly.mp3', 'little.mp3', 'major.mp3'];
 
     /*
-    	Play a sound.
+    	Play a sound. If the previous sound is not finished, they will be played together.
     	[
     		@para numOrName:number the number of track to play
     	]

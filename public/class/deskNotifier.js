@@ -6,6 +6,7 @@
 
   /*
   The static class controls desktop notification.
+  Only supports Chrome and cannot be used on local file system.
   */
 
   DeskNotifier = (function() {

@@ -3,6 +3,7 @@ api = window.webkitNotifications
 
 ###
 The static class controls desktop notification.
+Only supports Chrome and cannot be used on local file system.
 ###
 class DeskNotifier
 	@list: []
@@ -17,8 +18,9 @@ class DeskNotifier
 		return @ if not @isSupported or @isEnabled
 
 		api.requestPermission ->
-			onAnswer(@isEnabled) if typeof onAnswer is 'function'
+			onAnswer @isEnabled if typeof onAnswer is 'function'
 			return
+			
 		return @
 
 	###
@@ -40,8 +42,7 @@ class DeskNotifier
 	@return object this object
 	###
 	@notify: (a, b, c, d, e) ->
-		if not @isSupported
-			return @
+		return @ if not @isSupported
 
 		if a? and typeof a is 'object'
 			iconPath = a.iconPath
@@ -71,11 +72,10 @@ class DeskNotifier
 		isClickToClose = if isClickToClose is true then true or false
 
 		if @isEnabled
-			@_notify(iconPath, title, content, timeout, isClickToClose)
+			@_notify iconPath, title, content, timeout, isClickToClose
 		else
 			@askPermission (isEnabled) ->
-				if isEnabled
-					@_notify iconPath, title, content, timeout, isClickToClose
+					@_notify iconPath, title, content, timeout, isClickToClose if isEnabled
 
 		return @
 
@@ -83,33 +83,27 @@ class DeskNotifier
 	Pop out a notification.
 	###
 	@_notify: (iconPath, title, content, timeout, isClickToClose) ->
-		notification = api.createNotification(iconPath, title, content)
-		@list.push(notification)
+		notification = api.createNotification iconPath, title, content
+		@list.push notification
 
-		notification.addEventListener('close', (e) ->
-			index = DeskNotifier.list.indexOf(notification)
+		notification.addEventListener 'close', (e) ->
+			index = DeskNotifier.list.indexOf notification
+			DeskNotifier.list.splice index, 1 if index >= 0
 
-			if index >= 0
-				DeskNotifier.list.splice(index, 1)
-		)
+		notification.addEventListener 'error', (e) ->
+			console.log 'error', DeskNotifier.list
+			index = DeskNotifier.list.indexOf notification
 
-		notification.addEventListener('error', (e) ->
-			console.log('error', DeskNotifier.list)
-			index = DeskNotifier.list.indexOf(notification)
-
-			if index >= 0
-				DeskNotifier.list.splice(index, 1)
-		)
+			DeskNotifier.list.splice index, 1 if index >= 0
 
 		if isClickToClose
-			notification.addEventListener('click', ->				
+			notification.addEventListener 'click', ->				
 				notification.cancel()
-			)
 		
 		if typeof timeout is 'number' and timeout > 0
-			setTimeout(->
+			setTimeout ->
 				notification.cancel()
-			, timeout)
+			, timeout
 
 		notification.show()
 		return @
@@ -117,7 +111,7 @@ class DeskNotifier
 ###
 Accessor Properties
 ###
-Object.defineProperties(DeskNotifier, {
+Object.defineProperties DeskNotifier, {
 	###
 	@return boolean whether the browser supports the feature
 	###
@@ -130,33 +124,33 @@ Object.defineProperties(DeskNotifier, {
 	isEnabled:
 		get: ->
 			return api? and api.checkPermission() is 0
-})
+}
 
 ### Unit Test ###
 window.DeskNotifier = DeskNotifier
 
 list = [
-	-> DeskNotifier.notify({
+	-> DeskNotifier.notify {
 		iconPath: 'https://developer.mozilla.org/favicon.ico'
 		title: 'Wait 5 seconds'
 		content: 'Pass parameters as an object'
 		timeout: 5000
 		isClickToClose: false
-	})
-	-> DeskNotifier.notify('https://developer.mozilla.org/favicon.ico', 'title', '3s', 3000)
-	-> DeskNotifier.notify('click me')
-	-> DeskNotifier.notify('title', 'click me')
-	-> DeskNotifier.notify('https://developer.mozilla.org/favicon.ico', 'title', 'click icon')
+	}
+	-> DeskNotifier.notify 'https://developer.mozilla.org/favicon.ico', 'title', '3s', 3000
+	-> DeskNotifier.notify 'click me'
+	-> DeskNotifier.notify 'title', 'click me'
+	-> DeskNotifier.notify 'https://developer.mozilla.org/favicon.ico', 'title', 'click icon'
 ]
 
 sync = (list,  timeout) ->
 	if func = list.shift()
 		func()
 		if list.length > 0
-			setTimeout(->
-				sync(list, timeout)
-			, timeout)
+			setTimeout ->
+				sync list, timeout
+			, timeout
 			
 	return @
 
-sync(list, 500)
+sync list, 500
