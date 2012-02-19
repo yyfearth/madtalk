@@ -9,11 +9,21 @@
 
     function AudioNotifier() {}
 
+    /*
+    	A list of availible tracks, which is related to the real filepath.
+    */
+
     AudioNotifier.listMusic = ['friendly.mp3', 'little.mp3', 'major.mp3'];
 
     /*
     	Play a sound.
-    	numOrName: the track number or the name.
+    	[
+    		@para numOrName:number the number of track to play
+    	]
+    	[
+    		@para numOrName:string the file name to play without extension
+    	]
+    	@return object this object
     */
 
     AudioNotifier.play = function(numOrName) {
@@ -25,12 +35,16 @@
       } else {
         src = this.listMusic[0];
       }
-      return (new Audio(src)).play();
+      (new Audio(src)).play();
+      return this;
     };
 
     return AudioNotifier;
 
   })();
+
+  /* Unit test
+  */
 
   $(function() {
     var list, sync;

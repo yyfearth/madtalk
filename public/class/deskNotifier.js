@@ -5,7 +5,7 @@
   api = window.webkitNotifications;
 
   /*
-  The static class controls desktop notification
+  The static class controls desktop notification.
   */
 
   DeskNotifier = (function() {
@@ -16,36 +16,50 @@
 
     /*
     	Ask for desktop notification permission.
-    	onAnswer: (isEnabled)
+    	@para onAnswered:function callback when answered.
+    		@para isEnabled:boolean whether the permission is granted
+    	@return object this object
     */
 
-    DeskNotifier.askPermission = function(onAnswer) {
-      if (!this.isSupported || this.isEnabled) return;
-      return api.requestPermission(function() {
-        if (typeof onAnswer === 'function') return onAnswer(this.isEnabled);
+    DeskNotifier.askPermission = function(onAnswered) {
+      if (!this.isSupported || this.isEnabled) return this;
+      api.requestPermission(function() {
+        if (typeof onAnswer === 'function') onAnswer(this.isEnabled);
       });
+      return this;
     };
 
     /*
     	Pop out a notification
-    	(parameterObj)
-    	(content)
-    	(title, content)
-    	(iconPath, title, content, timeout, isClickToCancel)
+    	[
+    		@para a:string the content
+    	]
+    	[
+    		@para a:string the title
+    		@para b:string the content
+    	]
+    	[
+    		@para a:string the icon URI
+    		@para b:string the title
+    		@para c:string the content
+    		@para d:number the time to close notification automatically
+    		@para e:boolean default true, whether the notification is allowed to be closed by mouse click
+    	]
+    	@return object this object
     */
 
     DeskNotifier.notify = function(a, b, c, d, e) {
-      var content, iconPath, isClickToCancel, timeout, title;
-      if (!this.isSupported) return;
+      var content, iconPath, isClickToClose, timeout, title;
+      if (!this.isSupported) return this;
       if ((a != null) && typeof a === 'object') {
         iconPath = a.iconPath;
         title = a.title;
         content = a.content;
         timeout = a.timeout;
-        isClickToCancel = a.isClickToCancel;
+        isClickToClose = a.isClickToClose;
       } else {
         iconPath = '';
-        isClickToCancel = e || true;
+        isClickToClose = e || true;
         if (!(b != null)) {
           content = a;
         } else if (!(c != null)) {
@@ -61,23 +75,24 @@
       iconPath = iconPath != null ? iconPath : '';
       title = title != null ? title : '';
       content = content != null ? content : '';
-      isClickToCancel = isClickToCancel === true ? true || false : void 0;
+      isClickToClose = isClickToClose === true ? true || false : void 0;
       if (this.isEnabled) {
-        return this._notify(iconPath, title, content, timeout, isClickToCancel);
+        this._notify(iconPath, title, content, timeout, isClickToClose);
       } else {
-        return this.askPermission(function(isEnabled) {
+        this.askPermission(function(isEnabled) {
           if (isEnabled) {
-            return this._notify(iconPath, title, content, timeout, isClickToCancel);
+            return this._notify(iconPath, title, content, timeout, isClickToClose);
           }
         });
       }
+      return this;
     };
 
     /*
-    	Private, pop out a notification
+    	Pop out a notification.
     */
 
-    DeskNotifier._notify = function(iconPath, title, content, timeout, isClickToCancel) {
+    DeskNotifier._notify = function(iconPath, title, content, timeout, isClickToClose) {
       var notification;
       notification = api.createNotification(iconPath, title, content);
       this.list.push(notification);
@@ -92,7 +107,7 @@
         index = DeskNotifier.list.indexOf(notification);
         if (index >= 0) return DeskNotifier.list.splice(index, 1);
       });
-      if (isClickToCancel) {
+      if (isClickToClose) {
         notification.addEventListener('click', function() {
           return notification.cancel();
         });
@@ -102,7 +117,8 @@
           return notification.cancel();
         }, timeout);
       }
-      return notification.show();
+      notification.show();
+      return this;
     };
 
     return DeskNotifier;
@@ -115,7 +131,7 @@
 
   Object.defineProperties(DeskNotifier, {
     /*
-    	Whether the browser supports the feature.
+    	@return boolean whether the browser supports the feature
     */
     isSupported: {
       get: function() {
@@ -123,7 +139,7 @@
       }
     },
     /*
-    	Whether the browser permits desktop notification.
+    	@return boolean whether the browser permits desktop notification
     */
     isEnabled: {
       get: function() {
@@ -144,7 +160,7 @@
         title: 'Wait 5 seconds',
         content: 'Pass parameters as an object',
         timeout: 5000,
-        isClickToCancel: false
+        isClickToClose: false
       });
     }, function() {
       return DeskNotifier.notify('https://developer.mozilla.org/favicon.ico', 'title', '3s', 3000);
@@ -162,11 +178,12 @@
     if (func = list.shift()) {
       func();
       if (list.length > 0) {
-        return setTimeout(function() {
+        setTimeout(function() {
           return sync(list, timeout);
         }, timeout);
       }
     }
+    return this;
   };
 
   sync(list, 500);

@@ -2,44 +2,56 @@
 api = window.webkitNotifications
 
 ###
-The static class controls desktop notification
+The static class controls desktop notification.
 ###
 class DeskNotifier
 	@list: []
 
 	###
 	Ask for desktop notification permission.
-	onAnswer: (isEnabled)
+	@para onAnswered:function callback when answered.
+		@para isEnabled:boolean whether the permission is granted
+	@return object this object
 	###
-	@askPermission: (onAnswer) ->
-		if not @isSupported or @isEnabled
-			return
+	@askPermission: (onAnswered) ->
+		return @ if not @isSupported or @isEnabled
 
-		api.requestPermission(->
-			if typeof onAnswer is 'function'
-				onAnswer(@isEnabled)
-			)
+		api.requestPermission ->
+			onAnswer(@isEnabled) if typeof onAnswer is 'function'
+			return
+		return @
 
 	###
 	Pop out a notification
-	(parameterObj)
-	(content)
-	(title, content)
-	(iconPath, title, content, timeout, isClickToCancel)
+	[
+		@para a:string the content
+	]
+	[
+		@para a:string the title
+		@para b:string the content
+	]
+	[
+		@para a:string the icon URI
+		@para b:string the title
+		@para c:string the content
+		@para d:number the time to close notification automatically
+		@para e:boolean default true, whether the notification is allowed to be closed by mouse click
+	]
+	@return object this object
 	###
 	@notify: (a, b, c, d, e) ->
 		if not @isSupported
-			return
+			return @
 
 		if a? and typeof a is 'object'
 			iconPath = a.iconPath
 			title = a.title
 			content = a.content
 			timeout = a.timeout
-			isClickToCancel = a.isClickToCancel
+			isClickToClose = a.isClickToClose
 		else
 			iconPath = ''
-			isClickToCancel = e or true
+			isClickToClose = e or true
 
 			if not b?
 				content = a
@@ -56,20 +68,21 @@ class DeskNotifier
 		iconPath = iconPath ? ''
 		title = title ? ''
 		content = content ? ''
-		isClickToCancel = if isClickToCancel is true then true or false
+		isClickToClose = if isClickToClose is true then true or false
 
 		if @isEnabled
-			@_notify(iconPath, title, content, timeout, isClickToCancel)
+			@_notify(iconPath, title, content, timeout, isClickToClose)
 		else
-			@askPermission((isEnabled)->
+			@askPermission (isEnabled) ->
 				if isEnabled
-					@_notify(iconPath, title, content, timeout, isClickToCancel)
-			)
+					@_notify iconPath, title, content, timeout, isClickToClose
+
+		return @
 
 	###
-	Private, pop out a notification
+	Pop out a notification.
 	###
-	@_notify: (iconPath, title, content, timeout, isClickToCancel) ->
+	@_notify: (iconPath, title, content, timeout, isClickToClose) ->
 		notification = api.createNotification(iconPath, title, content)
 		@list.push(notification)
 
@@ -88,7 +101,7 @@ class DeskNotifier
 				DeskNotifier.list.splice(index, 1)
 		)
 
-		if isClickToCancel
+		if isClickToClose
 			notification.addEventListener('click', ->				
 				notification.cancel()
 			)
@@ -99,19 +112,20 @@ class DeskNotifier
 			, timeout)
 
 		notification.show()
+		return @
 
 ###
 Accessor Properties
 ###
 Object.defineProperties(DeskNotifier, {
 	###
-	Whether the browser supports the feature.
+	@return boolean whether the browser supports the feature
 	###
 	isSupported:
 		get: ->
 			return api?
 	###
-	Whether the browser permits desktop notification.
+	@return boolean whether the browser permits desktop notification
 	###
 	isEnabled:
 		get: ->
@@ -127,7 +141,7 @@ list = [
 		title: 'Wait 5 seconds'
 		content: 'Pass parameters as an object'
 		timeout: 5000
-		isClickToCancel: false
+		isClickToClose: false
 	})
 	-> DeskNotifier.notify('https://developer.mozilla.org/favicon.ico', 'title', '3s', 3000)
 	-> DeskNotifier.notify('click me')
@@ -142,5 +156,7 @@ sync = (list,  timeout) ->
 			setTimeout(->
 				sync(list, timeout)
 			, timeout)
+			
+	return @
 
 sync(list, 500)

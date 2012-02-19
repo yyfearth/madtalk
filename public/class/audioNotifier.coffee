@@ -4,6 +4,9 @@
 Static class to play sound effects.
 ###
 class AudioNotifier
+	###
+	A list of availible tracks, which is related to the real filepath.
+	###
 	@listMusic: [
 		'friendly.mp3'
 		'little.mp3'
@@ -12,7 +15,13 @@ class AudioNotifier
 
 	###
 	Play a sound.
-	numOrName: the track number or the name.
+	[
+		@para numOrName:number the number of track to play
+	]
+	[
+		@para numOrName:string the file name to play without extension
+	]
+	@return object this object
 	###
 	@play = (numOrName) ->
 		if typeof numOrName is 'number'
@@ -23,7 +32,9 @@ class AudioNotifier
 			src = @listMusic[0]
 
 		(new Audio(src)).play()
+		return @
 
+### Unit test ###
 $ ->
 	window.audioNotifier = AudioNotifier
 
