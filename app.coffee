@@ -10,9 +10,9 @@ io.set 'transports', [
 port = 8008
 
 app.configure ->
-    app.use express.static __dirname + '/public'
-    app.set 'view engine', 'coffee'
-    app.register '.coffee', require('coffeekup').adapters.express
+  app.use express.static __dirname + '/public'
+  app.set 'view engine', 'coffee'
+  app.register '.coffee', require('coffeekup').adapters.express
 
 app.get '/', (req, res) ->
   console.log 'A client has requested this route.'
@@ -29,7 +29,7 @@ channels.index = {}
 
 id = 0 # test
 
-channel = io.of('/' + id)
+channel = io.of '/' + id
 # channel.users = []
 # channel.users.index = {}
 
