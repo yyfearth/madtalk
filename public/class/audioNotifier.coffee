@@ -32,7 +32,7 @@ class AudioNotifier
 			src = @listMusic[0]
 
 		(new Audio(src)).play()
-		return @
+		@
 
 ### Unit test ###
 $ ->

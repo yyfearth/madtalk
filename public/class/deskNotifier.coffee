@@ -18,10 +18,9 @@ class DeskNotifier
 		return @ if not @isSupported or @isEnabled
 
 		api.requestPermission ->
-			onAnswer @isEnabled if typeof onAnswer is 'function'
+			onAnswered @isEnabled if typeof onAnswered is 'function'
 			return
-			
-		return @
+		@
 
 	###
 	Pop out a notification
@@ -75,9 +74,8 @@ class DeskNotifier
 			@_notify iconPath, title, content, timeout, isClickToClose
 		else
 			@askPermission (isEnabled) ->
-					@_notify iconPath, title, content, timeout, isClickToClose if isEnabled
-
-		return @
+				@_notify iconPath, title, content, timeout, isClickToClose if isEnabled
+		@
 
 	###
 	Pop out a notification.
@@ -106,7 +104,7 @@ class DeskNotifier
 			, timeout
 
 		notification.show()
-		return @
+		@
 
 ###
 Accessor Properties
@@ -117,13 +115,13 @@ Object.defineProperties DeskNotifier, {
 	###
 	isSupported:
 		get: ->
-			return api?
+			api?
 	###
 	@return boolean whether the browser permits desktop notification
 	###
 	isEnabled:
 		get: ->
-			return api? and api.checkPermission() is 0
+			api? and api.checkPermission() is 0
 }
 
 ### Unit Test ###
@@ -150,7 +148,6 @@ sync = (list,  timeout) ->
 			setTimeout ->
 				sync list, timeout
 			, timeout
-			
-	return @
+	@
 
 sync list, 500

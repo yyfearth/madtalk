@@ -18,14 +18,15 @@ status = OLD_TITLE
 blink = ->
 	document.title = if status is OLD_TITLE then newTitle else oldTitle
 	status = not status
+	return
 
 ### Public ###
-Object.defineProperties TitleNotifier, {
+Object.defineProperties TitleNotifier,
 	isStarted:
 		get: ->
-			return isStarted
+			isStarted
 		set: ->
-			return if isStarted then stop() else start()
+			if isStarted then stop() else start()
 
 	###
 	Start blinking.
@@ -47,7 +48,7 @@ Object.defineProperties TitleNotifier, {
 
 			isStarted = true
 
-			return @
+			@
 
 	###
 	Stop blinking.
@@ -63,8 +64,7 @@ Object.defineProperties TitleNotifier, {
 			status = OLD_TITLE
 			isStarted = false
 
-			return @
-}
+			@
 
 ### Unit Test ###
 console.log 'Debug script loaded at ' + (new Date()).toISOString()

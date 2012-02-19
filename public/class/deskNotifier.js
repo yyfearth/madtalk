@@ -25,7 +25,7 @@
     DeskNotifier.askPermission = function(onAnswered) {
       if (!this.isSupported || this.isEnabled) return this;
       api.requestPermission(function() {
-        if (typeof onAnswer === 'function') onAnswer(this.isEnabled);
+        if (typeof onAnswered === 'function') onAnswered(this.isEnabled);
       });
       return this;
     };

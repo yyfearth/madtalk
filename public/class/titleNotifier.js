@@ -32,7 +32,7 @@
 
   blink = function() {
     document.title = status === OLD_TITLE ? newTitle : oldTitle;
-    return status = !status;
+    status = !status;
   };
 
   /* Public
