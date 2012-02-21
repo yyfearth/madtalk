@@ -1,3 +1,0 @@
-[submodule "compilers/extra-coffee-script"]
-	path = compilers/extra-coffee-script
-	url = git://github.com/yyfearth/coffee-script.git
