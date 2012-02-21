@@ -31,7 +31,7 @@ class AudioNotifier
 		else
 			src = @listMusic[0]
 
-		(new Audio(src)).play()
+		new Audio(src).play()
 		@
 
 ### Unit test ###
@@ -40,40 +40,33 @@ $ ->
 
 	list = [
 		[
-			->
-				AudioNotifier.play 1
+			-> AudioNotifier.play 1
 			1000
 		]
 		[
-			->
-				AudioNotifier.play 'major'
+			-> AudioNotifier.play 'major'
 			1000
 		]
 		[
-			->
-				AudioNotifier.play()
+			-> AudioNotifier.play()
 			1000
 		]
 		[
-			->
-				AudioNotifier.play 124124
+			-> AudioNotifier.play 124124
 			0
 		]
 		[
-			->
-				AudioNotifier.play 'Hello world'
+			-> AudioNotifier.play 'Hello world'
 			0
 		]
 	]
 
-	sync = (list) ->
+	do sync = (list) ->
 		if item = list.shift()
 			item[0]()
 			if list.length > 0
 				setTimeout ->
 					sync list
 				, item[1]
-
-	sync(list)
 
 	console.log "Expect to see two errors below."

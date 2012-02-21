@@ -12,13 +12,6 @@
 
   port = 8008;
 
-  ajax('get', {
-    data: 1,
-    b: 2
-  }, function() {
-    return alert(2);
-  });
-
   app.configure(function() {
     app.use(express["static"](__dirname + '/public'));
     app.set('view engine', 'coffee');
@@ -29,7 +22,7 @@
     var id;
     console.log('A client has requested this route.');
     id = 0;
-    return req.redirect(id);
+    return res.redirect('/' + id);
   });
 
   app.get(/^\/[\w\-]+\/?$/, function(req, res) {
@@ -44,10 +37,13 @@
 
   channel = io.of('/' + id);
 
+  channel.records = [];
+
   channel.on('connection', function(socket) {
     console.log('a user conn, wait for login ...', socket.id);
     return socket.on('login', function(user, callback) {
-      if (!user.nick) {
+      var records;
+      if (!(user != null ? user.nick : void 0)) {
         return callback({
           err: 'invalid user'
         });
@@ -55,14 +51,17 @@
       socket.broadcast.emit('online', user);
       socket.on('message', function(data, callback) {
         data.user = user;
+        data.ts = new Date().getTime();
         console.log(data);
-        socket.broadcast.emit('message', data);
+        channel.emit('message', data);
+        channel.records.push(data);
         return callback(true);
       });
       socket.on('disconnect', function() {
         return socket.broadcast.emit('offline', user);
       });
-      return callback(user);
+      records = channel.records;
+      return callback(user, records);
     });
   });
 

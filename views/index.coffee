@@ -1,12 +1,10 @@
-@title = 'Chunky Bacon!'
-@canonical = 'http://chunky.bacon'
+@title = 'MadTalk'
+@canonical = 'http://madtalk.yyfearth.com:8008/'
 
-h1 @title
+#h1 @title
 
-p 'This is the home page.'
+partial 'login'
 
-p "Let's count to 10: "
+partial 'channel'
 
-p "#{i}..." for i in [1..10]
-
-partial 'partial', [1..10]
+#partial 'partial', [1..10]
