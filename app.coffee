@@ -21,6 +21,10 @@ app.get '/', (req, res) ->
   id = 0 # test
   res.redirect '/' + id
 
+# app.get /\/class\/|\.(?:coffee|styl)\b/i, (req, res) ->
+#   res.statusCode = 404
+#   res.end()
+
 app.get /^\/[\w\-]+\/?$/, (req, res) -> # '.' is not allowed
   res.render 'index' #, locals: port : port
 
