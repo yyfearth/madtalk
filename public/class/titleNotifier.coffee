@@ -1,5 +1,3 @@
-"use strict"
-
 ###
 A notifier makes the title blinking.
 ###

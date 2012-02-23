@@ -1,4 +1,3 @@
-"use strict"
 api = window.webkitNotifications
 
 ###
@@ -44,43 +43,40 @@ class DeskNotifier
 		return @ if not @isSupported
 
 		if a? and typeof a is 'object'
-			iconPath = a.iconPath
-			title = a.title
-			content = a.content
-			timeout = a.timeout
-			isClickToClose = a.isClickToClose
+			arg = a
 		else
-			iconPath = ''
-			isClickToClose = e or true
+			arg =
+				iconPath: ''
+				click2Close: e or true
 
 			if not b?
-				content = a
+				arg.content = a
 			else if not c?
-				title = a
-				content = b
+				arg.title = a
+				arg.content = b
 			else
-				iconPath = a
-				title = b
-				content = c
-				timeout = d
-
-		# Default value
-		iconPath = iconPath ? ''
-		title = title ? ''
-		content = content ? ''
-		isClickToClose = if isClickToClose is true then true or false
+				arg.iconPath = a
+				arg.title = b
+				arg.content = c
+				arg.timeout = d
 
 		if @isEnabled
-			@_notify iconPath, title, content, timeout, isClickToClose
+			@_notify arg
 		else
 			@askPermission (isEnabled) ->
-				@_notify iconPath, title, content, timeout, isClickToClose if isEnabled
+				@_notify arg if isEnabled
 		@
 
 	###
 	Pop out a notification.
 	###
-	@_notify: (iconPath, title, content, timeout, isClickToClose) ->
+	@_notify: ({iconPath, title, content, timeout, click2Close}) ->
+		throw 'content is necessary' unless content
+		iconPath ?= ''
+		title ?= @title or ''
+		timeout = 0 unless timeout? > 0
+		click2Close ?= off
+
 		notification = api.createNotification iconPath, title, content
 		@list.push notification
 
@@ -94,7 +90,7 @@ class DeskNotifier
 
 			DeskNotifier.list.splice index, 1 if index >= 0
 
-		if isClickToClose
+		if click2Close
 			notification.addEventListener 'click', ->				
 				notification.cancel()
 		
@@ -113,15 +109,11 @@ Object.defineProperties DeskNotifier, {
 	###
 	@return boolean whether the browser supports the feature
 	###
-	isSupported:
-		get: ->
-			api?
+	isSupported: get: -> api?
 	###
 	@return boolean whether the browser permits desktop notification
 	###
-	isEnabled:
-		get: ->
-			api? and api.checkPermission() is 0
+	isEnabled: get: -> api? and api.checkPermission() is 0
 }
 
 ### Unit Test ###
@@ -133,7 +125,7 @@ list = [
 		title: 'Wait 5 seconds'
 		content: 'Pass parameters as an object'
 		timeout: 5000
-		isClickToClose: false
+		click2Close: false
 	}
 	-> DeskNotifier.notify 'https://developer.mozilla.org/favicon.ico', 'title', '3s', 3000
 	-> DeskNotifier.notify 'click me'

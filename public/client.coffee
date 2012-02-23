@@ -96,9 +96,11 @@ do_login = (user) ->
 
       channel.on 'online', (user) ->
         console.log 'online', user
+        _log.append "<li>#{user.nick} Online</li>"
 
       channel.on 'offline', (user) ->
         console.log 'offline', user
+        _log.append "<li>#{user.nick} Offline</li>"
 
       channel.on 'message', (data) ->
         console.log 'got message', data

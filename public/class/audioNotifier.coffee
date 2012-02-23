@@ -1,5 +1,3 @@
-'use strict'
-
 ###
 Static class to play sound effects.
 ###
