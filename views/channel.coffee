@@ -3,9 +3,10 @@ div '#channel', hidden: 'hidden', ->
     li '.msg', -> '(none)'
   div '#toolbar', ->
     ul '#status', ->
+      li -> a '#user-nick', -> '(nickname)'
       li -> a '#conn-status', -> 'offline'
       li -> a '#users-list', -> '(none)'
-      li ->
+      li -> span hidden: true, ->
         text 'Channel Uptime: '
         a '#uptime', -> '0s'
     textarea id: 'entry', rows: 1

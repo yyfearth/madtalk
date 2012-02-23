@@ -2,9 +2,28 @@
   padding 0
   margin 0
 
+// vars
+$bkg-color = #22252a
+$font-color = #eee
+
+// mixins
+vendor(prop, args)
+  -webkit-{prop} args
+  -moz-{prop} args
+  {prop} args
+vendor-all(prop, args)
+  -webkit-{prop} args
+  -moz-{prop} args
+  -ms-{prop} args
+  -o-{prop} args
+  {prop} args
+
+transitions() // delay 0
+  vendor-all('transition', arguments)
+
 body, #entry
-  background #22252a
-  color #eee
+  background $bkg-color
+  color $font-color
 
 body, table
   font-family 'DejaVu Sans Mono', fixed
@@ -52,6 +71,8 @@ a
   width 100%
   bottom 0
   background #733
+  //max-height 50%
+  //overflow hidden
   ul
     margin-left 1em
     list-style none
@@ -62,17 +83,48 @@ a
     display block
     width 100%
     font-size inherit
-    padding 1em
+    padding 1em 1em 0 1em
     border-width 0
     outline none
     clear both
+    resize none
+    overflow hidden
+    overflow-y auto
 
 #log
   padding-bottom 10em // default
   background inherit
   overflow hidden
+  padding 1em
+  background-color $bkg-color
   li
-    margin default
+    //display block
+    margin 1px 0 0 1em
+    border-radius 0.5em
+    background-color lighten($bkg-color, 2%)
+    transitions all 0.3s ease-in-out
+    &:nth-child(even)
+      background-color lighten($bkg-color, 3%)
+    &:hover
+      background-color lighten($bkg-color, 10%)
+    label
+      font-size 14px
+      line-height 16px
+      display inline-block
+      text-align center
+      vertical-align top
+      width 6em
+      color darken($font-color, 25%)
+      padding 0.3em
+      padding-right: 0.5em
+    div
+      padding 0.1em 0.5em
+      display inline-block
+      text-align left
+      vertical-align top
+      color $font-color
+      min-height 2em
+      border-left 1px dashed #444
 
 
 // not very important info

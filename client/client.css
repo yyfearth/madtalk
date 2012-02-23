@@ -71,18 +71,56 @@ a:hover {
   display: block;
   width: 100%;
   font-size: inherit;
-  padding: 1em;
+  padding: 1em 1em 0 1em;
   border-width: 0;
   outline: none;
   clear: both;
+  resize: none;
+  overflow: hidden;
+  overflow-y: auto;
 }
 #log {
   padding-bottom: 10em;
   background: inherit;
   overflow: hidden;
+  padding: 1em;
+  background-color: #22252a;
 }
 #log li {
-  margin: default;
+  margin: 1px 0 0 1em;
+  border-radius: 0.5em;
+  background-color: #26292f;
+  -webkit-transition: all 0.3s ease-in-out;
+  -moz-transition: all 0.3s ease-in-out;
+  -ms-transition: all 0.3s ease-in-out;
+  -o-transition: all 0.3s ease-in-out;
+  transition: all 0.3s ease-in-out;
+}
+#log li:nth-child(even) {
+  background-color: #282b31;
+}
+#log li:hover {
+  background-color: #353a42;
+}
+#log li label {
+  font-size: 14px;
+  line-height: 16px;
+  display: inline-block;
+  text-align: center;
+  vertical-align: top;
+  width: 6em;
+  color: #b3b3b3;
+  padding: 0.3em;
+  padding-right: 0.5em;
+}
+#log li div {
+  padding: 0.1em 0.5em;
+  display: inline-block;
+  text-align: left;
+  vertical-align: top;
+  color: #eee;
+  min-height: 2em;
+  border-left: 1px dashed #444;
 }
 .notice td,
 .join td,

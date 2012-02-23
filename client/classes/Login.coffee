@@ -17,7 +17,9 @@ class Login
       inited: get: -> _el?
       hidden: get: -> _el.hidden
 
-  ### public methods ###
+  ### static ###
+  @create: (cfg) -> new @ cfg
+  ### public ###
   init: ->
     return if @inited
     console.log 'init'

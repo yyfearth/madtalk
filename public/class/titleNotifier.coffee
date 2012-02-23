@@ -3,66 +3,67 @@ A notifier makes the title blinking.
 ###
 class TitleNotifier
 
-### Private ###
-isStarted = false
-oldTitle = ''
-newTitle = ''
-intervalId = null
+do ->
+	### Private ###
+	isStarted = false
+	oldTitle = ''
+	newTitle = ''
+	intervalId = null
 
-NEW_TITLE = false
-OLD_TITLE = true
-status = OLD_TITLE
+	NEW_TITLE = false
+	OLD_TITLE = true
+	status = OLD_TITLE
 
-blink = ->
-	document.title = if status is OLD_TITLE then newTitle else oldTitle
-	status = not status
-	return
+	blink = ->
+		document.title = if status is OLD_TITLE then newTitle else oldTitle
+		status = not status
+		return
 
-### Public ###
-Object.defineProperties TitleNotifier,
-	isStarted:
-		get: ->
-			isStarted
-		set: ->
-			if isStarted then stop() else start()
+	### Public ###
+	Object.defineProperties TitleNotifier,
+		isStarted:
+			get: ->
+				isStarted
+			set: ->
+				if isStarted then stop() else start()
 
-	###
-	Start blinking.
-	@para title:string the blinking title
-	@return object this object
-	###
-	start:
-		value: (title, timeout) ->
-			if isStarted
-				return @
+		###
+		Start blinking.
+		@para title:string the blinking title
+		@return object this object
+		###
+		start:
+			value: (title, timeout) ->
+				if isStarted
+					return @
 
-			newTitle = title
-			oldTitle = document.title
+				newTitle = title
+				oldTitle = document.title
 
-			blink()
-			intervalId = setInterval ->
 				blink()
-			, timeout
+				intervalId = setInterval ->
+					blink()
+				, timeout
 
-			isStarted = true
+				isStarted = true
 
-			@
+				@
 
-	###
-	Stop blinking.
-	@return object this object
-	###
-	stop:
-		value: ->
-			if not isStarted
-				return @
-			
-			clearInterval intervalId
-			document.title = oldTitle
-			status = OLD_TITLE
-			isStarted = false
+		###
+		Stop blinking.
+		@return object this object
+		###
+		stop:
+			value: ->
+				if not isStarted
+					return @
+				
+				clearInterval intervalId
+				document.title = oldTitle
+				status = OLD_TITLE
+				isStarted = false
 
-			@
+				@
 
 ### Unit Test ###
 console.log 'Debug script loaded at ' + (new Date()).toISOString()
