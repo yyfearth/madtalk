@@ -10,9 +10,10 @@ html ->
     # link rel: 'icon', href: '/favicon.png'
     link rel: 'stylesheet', href: '/client.css'
 
-    script src: '/lib/jquery.min.js'
-    script src: '/lib/socket.io.js'
-    script src: '/client.js'
+    script src: '/lib/jquery.min.js', defer: 'defer'
+    script src: '/lib/socket.io.js', defer: 'defer'
+    script src: '/lib/showdown.js', defer: 'defer'
+    script src: '/client.js', defer: 'defer'
 
     # coffeescript ->
     #   $(document).ready ->

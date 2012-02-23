@@ -19,13 +19,15 @@ catch e
 _log = null
 _users = null
 _toolbar = null
+gfm = new Showdown.converter()
 
 add_log = (recs) ->
   recs = [recs] unless Array.isArray recs
+  # gfm.makeHtml xss_safe.str(rec.data).replace /\n/g, '<br/>'
   recs = recs.map (rec) -> "<li>
 <label>#{xss_safe.str rec.user.nick}<br/>
 #{new Date(rec.ts).toLocaleTimeString()}</label>
-<div>#{xss_safe.str(rec.data).replace /\n/g, '<br/>'}</div>
+<div>#{gfm.makeHtml xss_safe.str rec.data}</div>
 </li>"
   
   _log.append recs.join '\n'
@@ -135,7 +137,7 @@ channel.on 'connect', ->
     _entry.keydown (e) ->
       if e.keyCode is 13 and not (e.ctrlKey or e.metaKey or e.shiftKey or e.altKey)
         return false unless @value.trim()
-        channel.message type: 'text', data: @value
+        channel.message type: 'gfm', data: @value
         @value = ''
         false
     
