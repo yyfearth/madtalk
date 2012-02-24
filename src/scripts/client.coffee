@@ -1,7 +1,7 @@
 # madtalk client.coffee
 
-import 'classes/Login'
-import 'utils/xss_safe'
+import 'login'
+import 'xss_safe'
 
 channel = io.connect '/0'
 
