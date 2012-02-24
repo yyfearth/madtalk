@@ -1,10 +1,11 @@
 {exec} = require 'child_process'
+fs = require 'fs'
+path = require 'path'
 xcoffee = require 'extra-coffee-script'
 
-task 'build:src', 'Build project from src/*.coffee to lib/*.js', ->
-  exec 'xcoffee -cxm --output lib/ src/', (err, stdout, stderr) ->
-    throw err if err
-    console.log stdout + stderr
-
-task 'build:client', 'Build client', ->
-
+task 'build', 'Build everything', ->
+	srcPath = path.resolve __dirname, 'src', 'app.coffee'
+	code = fs.readFileSync srcPath, 'utf-8'
+	compiledCode = xcoffee.compile code, filename: srcPath
+	outPath = path.resolve __dirname, 'server', 'app.js'
+	fs.writeFileSync outPath, compiledCode, 'utf-8'
