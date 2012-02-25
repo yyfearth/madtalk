@@ -1,16 +1,23 @@
-# madtalk app.coffee
+# madtalk app.coffee for dev use
+
+# for server
 express = require 'express'
 app = express.createServer()
 io = require('socket.io').listen app
 io.set 'transports', [
   'websocket'
-  'flashsocket'
 ]
+# for compile
+fs = require 'fs'
+stylus = require 'stylus'
+xcoffee = require 'extra-coffee-script'
 
 port = 8008
 
 app.configure ->
-  app.use express.static __dirname + '/client' # dev only
+  app.use express.static __dirname + '/public' # dev only
+  app.use express.gzip()
+  app.set 'views', __dirname + '/views'
   app.set 'view engine', 'coffee'
   app.register '.coffee', require('coffeekup').adapters.express
 
@@ -21,9 +28,28 @@ app.get '/', (req, res) ->
   id = 0 # test
   res.redirect '/' + id
 
-# app.get /\/class\/|\.(?:coffee|styl)\b/i, (req, res) ->
-#   res.statusCode = 404
-#   res.end()
+app.get '/client.css', (req, res) ->
+  filename = __dirname + '/styles/client.styl'
+  fs.readFile filename, 'utf-8', (err, code) ->
+      throw err if err
+      stylus.render code, 
+        filename: filename
+        paths: [__dirname + '/styles/']
+      , (err, css) ->
+        throw err if err
+        res.writeHead 200, 'Content-Type': 'text/css'
+        res.end css, 'utf-8'
+  #console.log 'stylus', css
+
+app.get '/client.js', (req, res) ->
+  filename = __dirname + '/scripts/client.coffee'
+  fs.readFile filename, 'utf-8', (err, code) ->
+    js = xcoffee.compile code, 
+      imports: on
+      filename: filename
+    res.writeHead 200, 'Content-Type': 'application/javascript'
+    res.end js, 'utf-8'
+  #console.log 'stylus', css
 
 app.get /^\/[\w\-]+\/?$/, (req, res) -> # '.' is not allowed
   res.render 'index' #, locals: port : port

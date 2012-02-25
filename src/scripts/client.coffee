@@ -57,7 +57,7 @@ do_login = (user) ->
       users.index = {}
       users.forEach (u) -> users.index[u.nick] = u
 
-      channel.el = document.querySelector '#channel'
+      channel.el = document.querySelector '#chat'
       channel.el.hidden = false
       # show
 
@@ -113,7 +113,7 @@ channel.on 'connect', ->
 
     _log = $ '#log'
     _users = $ '#users-list'
-    _toolbar = $ '#toolbar'
+    _toolbar = $ '#panel'
     _entry = $ '#entry'
 
     _users.click ->

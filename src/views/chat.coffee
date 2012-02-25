@@ -1,7 +1,7 @@
-div '#channel', hidden: 'hidden', ->
+div '#chat', hidden: 'hidden', ->
   ul '#log', ->
-    li '.msg', -> '(none)'
-  div '#toolbar', ->
+    li '.log', -> '(none)'
+  div '#panel', ->
     ul '#status', ->
       li -> a '#user-nick', title: 'your nickname', -> '(nickname)'
       li -> a '#conn-status', title: 'current status', -> 'offline'

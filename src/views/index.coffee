@@ -5,6 +5,6 @@
 
 partial 'login'
 
-partial 'channel'
+partial 'chat'
 
 #partial 'partial', [1..10]

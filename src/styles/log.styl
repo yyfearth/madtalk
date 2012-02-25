@@ -1,0 +1,60 @@
+#log
+  no-space()
+  padding-bottom 10em // default
+  background inherit
+  overflow hidden
+  padding 1em
+  background-color $bkg-color
+  > li
+    //display block
+    padding 0
+    margin 1px 0 0 1em
+    border-radius 0.5em
+    background-color lighten($bkg-color, 2%)
+    transitions all 0.3s ease-in-out
+    &:nth-child(even)
+      background-color lighten($bkg-color, 3%)
+    &:hover
+      background-color lighten($bkg-color, 10%)
+    label
+      font-size 14px
+      line-height 16px
+      display inline-block
+      text-align center
+      vertical-align top
+      width 6em
+      color darken($font-color, 25%)
+      padding 0.3em
+      padding-right: 0.5em
+    div
+      padding 0.1em 0.5em
+      display inline-block
+      text-align left
+      vertical-align top
+      color $font-color
+      min-height 2em
+      border-left 1px dashed #444
+      p
+        margin 0.5em 0
+      *:first-child
+        margin-top 0.3em
+      *:last-child
+        margin-bottom 0.3em
+
+// not very important info
+.notice td, .join td, .part td, .message .date
+  color #555
+.error td
+  color #933
+.personal .nick, .notice .nick
+  color #cd5
+.message
+  margin 0.1em 0
+  td
+    vertical-align top
+
+.nick
+  font-weight bold
+  padding 0 1em 0 0.5em
+  a
+    color inherit
