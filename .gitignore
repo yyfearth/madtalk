@@ -25,3 +25,7 @@ npm-debug.log
 .Trashes
 Thumbs.db 
 Desktop.ini
+
+# src
+/src/*.js
+/src/*.css

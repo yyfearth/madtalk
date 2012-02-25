@@ -2,7 +2,7 @@
 name: 'madtalk'
 description: 'MadTalk'
 keywords: ['madtalk', 'chat', 'markdown', 'coffee', 'stylus', 'coffeekup']
-version: '0.2.0'
+version: '0.3.0'
 author: 'Wilson Young <yyfearth@gmail.com>'
 contributors: [
 	name: 'Wilson Young'
@@ -12,8 +12,8 @@ contributors: [
 	email: 'masonaxcte@gmail.com'
 ]
 scripts:
-  start: 'node app.js'
-  test: ''
+  start: 'node server/app.js'
+  test: 'coffee src/app.coffee'
 main: 'app.js'
 license: ['MIT', 'BSD']
 dependencies:
