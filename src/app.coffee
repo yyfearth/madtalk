@@ -16,7 +16,7 @@ port = 8008
 
 app.configure ->
   app.use express.static __dirname + '/public' # dev only
-  app.use express.gzip()
+  #app.use express.gzip()
   app.set 'views', __dirname + '/views'
   app.set 'view engine', 'coffee'
   app.register '.coffee', require('coffeekup').adapters.express
@@ -45,8 +45,8 @@ app.get '/client.js', (req, res) ->
   filename = __dirname + '/scripts/client.coffee'
   fs.readFile filename, 'utf-8', (err, code) ->
     js = xcoffee.compile code, 
-      imports: on
       filename: filename
+      imports: on
     res.writeHead 200, 'Content-Type': 'application/javascript'
     res.end js, 'utf-8'
   #console.log 'stylus', css

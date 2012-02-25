@@ -10,4 +10,4 @@ div '#chat', hidden: 'hidden', ->
       li -> span hidden: true, ->
         text 'Channel Uptime: '
         a '#uptime', -> '0s'
-    textarea id: 'entry', rows: 1, maxlength: 10000
+    textarea id: 'entry', rows: 1, maxlength: 10000, autofocus: on
