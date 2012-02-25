@@ -52,7 +52,7 @@ app.get '/client.js', (req, res) ->
   #console.log 'stylus', css
 
 app.get /^\/[\w\-]+\/?$/, (req, res) -> # '.' is not allowed
-  res.render 'index' #, locals: port : port
+  res.render 'index', dev: yes
 
 channels = []
 channels.index = {}

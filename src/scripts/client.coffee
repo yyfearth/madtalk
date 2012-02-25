@@ -1,6 +1,16 @@
+###
+MadTalk
+client scripts
+include jquery socket.io showdown
+###
+
 # madtalk client.coffee
 
-#import 'lib/showdown.js'
+# import libs
+import 'lib/jquery.js'
+import 'lib/socket.io.js'
+import 'lib/showdown.js'
+# import modules
 import 'login'
 import 'xss_safe'
 
