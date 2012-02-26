@@ -49,9 +49,9 @@ class Channel
 
   fire: (event, args...) =>
     event = @_evt event
-    return @ if false is @listener["before#{event}"]? args... # call before event listener
+    return @ if false is @listeners["before#{event}"]? args... # call before event listeners
     return @ if false is @["on#{event}"]? args... # on event
-    @listener["after#{event}"]? args... # call before event listener
+    @listeners["after#{event}"]? args... # call before event listeners
     @
 
   ### methods ###
@@ -65,7 +65,8 @@ class Channel
     console.log 'wait for connect msg'
     # listen connect
     @on 'connect', =>
-      return if false is @listener.connected? @ # call connected
+      return if false is @listeners.connected? @ # call connected
+      @on 'disconnect', => @listeners.disconnected? @ # bind disconnect
       @bind 'system'
     @
   # end of connect
@@ -76,10 +77,10 @@ class Channel
     console.log 'do_login', @user
     @emit 'login', @user, (upduser) =>
       if upduser.err
-        console.error upduser
-        throw upduser.err
+        #throw upduser.err
+        @listeners.loginfailed? upduser.err # call logined
       @user.sid = upduser.sid
-      return if false is @listener.logined? @ # call logined
+      return if false is @listeners.logined? user # call logined
       @logined = yes
       @listen()
     @
@@ -94,13 +95,21 @@ class Channel
     @
   # end of record
 
-  msg: (msg, callback) -> # send message
+  ### send message
+  @param msg {object} messsage data { data: 'xxx', type: 'text|gfm|md|...' }
+  @param callback {function} server bcase success function (bool ok)
+  ###
+  msg: (msg, callback) ->
     throw 'not logined' unless @logined
     throw 'invalid msg data' unless msg?.data
     msg.type ?= 'text'
     msg.user = @user
-    @emit 'message', msg, (ok) ->
-      callback? ok
+    if typeof callback is 'function'
+      callback = (ok) -> callback ok
+    else
+      callback = null
+    @emit 'message', msg, callback
+    # todo: add event here
     @
   # end of msg
 
@@ -111,7 +120,7 @@ class Channel
     @emit 'sync',
       last: @last
     , (ch) =>
-      return @ if false is @listener.beforesync? ch # call event listener
+      return @ if false is @listeners.beforesync? ch # call event listeners
       @users = ch.users # included me
       @users.index = {}
       ch.users.forEach (u) => @users.index[u.nick] = u
@@ -119,7 +128,7 @@ class Channel
         ch.records.forEach (r) => @record r
       @init = ch.init # channel init time
       @last = ch.last # last update
-      @listener.aftersync? ch # call after event listener
+      @listeners.aftersync? ch # call after event listeners
       @
     @
   # end of sync
@@ -145,36 +154,42 @@ class Channel
   onmessage: (msg) -> @record msg
   onuserjoin: (user) -> # status must be online or offline
     status = if user.online then 'online' else 'offline'
-    return @ if false is @listener["beforeuser#{status}"]? user # call before event listener
+    return @ if false is @listeners["beforeuser#{status}"]? user # call before event listeners
     @users.push user unless @users.index[user.nick]?
     @users.index[user.nick].status = user.status
-    @listener["afteruser#{status}"]? user # call before event listener
+    @listeners["afteruser#{status}"]? user # call before event listeners
     return
   onuserleave: (user) ->
     if user.sid is @user.sid and user.kicked # kicked
       @leave() # ask to leave
     else if (u = @users.index[user.nick])?
-      return @ if false is @listener.beforeuserleave? u # call before event listener
+      return @ if false is @listeners.beforeuserleave? u # call before event listeners
       @users[u.idx] = null # not delete
       delete @users.index[u.nick]
-      @listener.afteruserleave? u # call before event listener
+      @listeners.afteruserleave? u # call before event listeners
     return
 
   # handlers
-  listener: # listeners fired before event return false to cancel
+  listeners: # listenerss fired before event return false to cancel
     connected: (ch) ->
       console.log 'connected'
+      return
+    disconnected: (ch) ->
+      console.log 'disconnected'
       return
     logined: (user) ->
       console.log 'logined', user
       return
+    loginfailed: (err) ->
+      console.error upduser
+      return
     beforesystem: (msg) ->
       console.log 'got system message', data
       true
-    beforemsg: (msg) ->
+    beforemessage: (msg) ->
       console.log 'got message', msg
       true
-    # aftermsg: (msg) ->
+    # aftermessage: (msg) ->
     beforesync: (ch) ->
       console.log 'got sync data', ch
       true
@@ -187,4 +202,9 @@ class Channel
     # afteruserleave: (user) ->
     # beforeleave: ->
     # afterleave: ->
-  # end of listener
+  # end of listeners
+
+do -> # helper
+  # aliases
+  C = Channel
+  C::message = C::sendMessage = C::msg

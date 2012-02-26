@@ -11,10 +11,11 @@ import 'lib/jquery.js'
 import 'lib/socket.io.js'
 import 'lib/showdown.js'
 # import modules
+import 'channel'
 import 'login'
 import 'xss_safe'
 
-channel = io.connect '/0'
+id = location.pathname
 
 try
   user = sessionStorage.user
@@ -26,6 +27,8 @@ try
 catch e
   console.error 'bad user session data', e
   user = null
+
+window.channel = channel = Channel.create {id, io, user}
 
 _log = null
 _users = null
@@ -53,83 +56,55 @@ add_log = (recs) ->
 
   return
 
-do_login = (user) ->
-  console.log 'do_login', user
-  channel.emit 'login', user, (upduser, ch) -> # updated user profile
-
-    if upduser.err
-      console.error upduser
-      alert upduser.err + '\n reload the app pls!'
-    else
-      console.log 'logined', upduser, ch
-      user.uid = upduser.uid
-
-      channel.records = ch.records or []
-      users = channel.users = ch.users # included me
-      channel.ts = ch.ts
-      users.index = {}
-      users.forEach (u) -> users.index[u.nick] = u
-
-      channel.el = document.querySelector '#chat'
-      channel.el.hidden = false
-      # show
-
-      channel.on 'online', (user) ->
-        console.log 'online', user
-        users.push user unless users.index[user.nick]?
-        users.index[user.nick].status is 'online'
-        _log.append "<li>#{user.nick} Online</li>"
-
-      channel.on 'offline', (user) ->
-        users.index[user.nick].status is 'offline'
-        console.log 'offline', user
-        _log.append "<li>#{user.nick} Offline</li>"
-
-      channel.on 'message', (data) ->
-        console.log 'got message', data
-        add_log data
-
-      channel.message = (data) ->
-        channel.emit 'message', data, (ok) ->
-          if ok
-            console.log 'message sent', data
-          else
-            console.error data
-
-      window.onbeforeunload = ->
-        #todo: use localstorage with sid
-        sessionStorage.user = JSON.stringify user
-        auto_save()
-        return
-
-      _log.empty()
-      add_log ch.records
-
-      online_u = users.filter (u) -> u.status isnt 'offline'
-      _users.text "#{online_u.length} / #{users.length}"
-      $('#user-nick').text user.nick
-
-      save_text = sessionStorage.auto_save or ''
-      _entry.val(save_text)[0].selectionStart = save_text.length
-
-      return
-    # end of emit login
-  return
-
-login = Login.create el: '#login', user: user, logined: do_login
-# console.log (new Login el: '#login', user: user, logined: do_login),
-#   (Login.new el: '#login', user: user, logined: do_login)
+login = Login.create el: '#login', user: user, login: (user) ->
+  channel.user = user
+  channel.login()
 
 auto_save = ->
   #todo: use localstorage with sid
   sessionStorage.auto_save = _entry?.val() or ''
   return
 
-window.channel = channel
+setInterval auto_save, 30000 # 30s
 
-channel.on 'connect', ->
-  console.log 'connected'
-  $ -> # dom ready, todo: wait for conn
+channel.listeners.logined = (user) ->
+  el = document.querySelector '#chat'
+  el.hidden = false
+  $('#user-nick').text user.nick
+  
+  window.onbeforeunload = ->
+    #todo: use localstorage with sid
+    sessionStorage.user = JSON.stringify channel.user
+    auto_save()
+    return
+
+  save_text = sessionStorage.auto_save or ''
+  _entry.val(save_text)[0].selectionStart = save_text.length
+  return
+
+channel.listeners.loginfailed = (err) ->
+  alert 'login failed!\n' + err
+
+channel.listeners.aftersync = (ch) ->
+  _log.empty()
+  add_log ch.records
+
+  online_u = channel.users.filter (u) -> u.status isnt 'offline'
+  _users.text "#{online_u.length} / #{channel.users.length}"
+  return
+
+channel.listeners.disconnected = (ch) ->
+  $('#conn-status').text 'offline'
+  return
+
+channel.listeners.aftermessage = (msg) ->
+  add_log msg
+
+channel.listeners.afterleave = ->
+  #todo: leave and logout
+
+channel.listeners.connected = (ch) ->
+  $ -> # dom ready
     console.log 'domready'
     $('#conn-status').text 'online'
 
@@ -169,7 +144,7 @@ channel.on 'connect', ->
     _entry.keydown (e) ->
       if e.keyCode is 13 and not (e.ctrlKey or e.metaKey or e.shiftKey or e.altKey)
         return false unless @value.trim()
-        channel.message type: 'gfm', data: @value
+        channel.msg type: 'gfm', data: @value
         _entry.history.unshift @value
         _entry.history.cur = -1
         @value = ''
@@ -181,10 +156,6 @@ channel.on 'connect', ->
     
     ent = _entry.change()
 
-    channel.on 'system', (data) ->
-      console.log 'got system message', data
-
     login.init() unless login.inited
 
-channel.on 'disconnect', ->
-  $('#conn-status').text 'offline'
+    return

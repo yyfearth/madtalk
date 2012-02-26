@@ -119,14 +119,14 @@ class Channel
     client.broadcast.emit 'online', user
     @last = new Date().getTime() # last upt ts
     # listen and re-broadcast messages
-    client.on 'message', (data, callback) ->
+    client.on 'message', (data, callback) =>
       data.user = user
-      client.channel.msg data
-      callback yes
+      @msg data
+      callback? yes # may exists
     # sync req
     client.on 'sync', (data, callback) =>
       last = data.last or data.ts or 0
-      callback
+      callback # must exists
         records: @records.filter (r) -> r.ts >= last
         users: @users
         last: @last # last update ts
@@ -139,6 +139,7 @@ class Channel
       client.broadcast.emit 'offline', user
     # user leave channel
     client.on 'leave', =>
+      console.log 'user leave', user.nick, user.sid
       @users[user.id] = null # not delete
       delete @users.index[user.nick]
       delete @users.index[user.sid]

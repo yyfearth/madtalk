@@ -2,7 +2,7 @@
 class Login
   constructor: (@cfg = el: '#login') ->
     @user = if @cfg.user?.nick then @cfg.user else null
-    @logined = @cfg.logined if typeof @cfg.logined is 'function'
+    @login = @cfg.login if typeof @cfg.login is 'function'
 
     ### private ###
     _el = null
@@ -30,9 +30,9 @@ class Login
       e.preventDefault()
       @user = nick: @form.nick.value
       @show off
-      @logined? @user
+      @login? @user
       false
-    @logined? @user if @user?.nick
+    @login? @user if @user?.nick
     @
 
   show: (show = yes) ->
