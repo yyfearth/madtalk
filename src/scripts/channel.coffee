@@ -169,7 +169,7 @@ class Channel
       @listeners.afteruserleave? u # call before event listeners
     return
 
-  # handlers
+  # event listeners
   listeners: # listenerss fired before event return false to cancel
     connected: (ch) ->
       console.log 'connected'

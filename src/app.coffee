@@ -12,7 +12,7 @@ fs = require 'fs'
 stylus = require 'stylus'
 xcoffee = require 'extra-coffee-script'
 # modules
-{Channel} = require './modules/Channel'
+{Channel} = require './modules/channel'
 
 port = 8008
 

@@ -60,8 +60,7 @@ class Channel
       client.on 'login', (user, callback) =>
         console.log 'req login', user
         client.user = user
-        #try
-        do =>
+        try
           @validate client, (user) =>
             # bind event handlers
             @handle client
@@ -69,9 +68,10 @@ class Channel
             callback? user
             # push sync
             @sync client
-        #catch err
-        #  callback? err: err.message
-        #return
+        catch err
+          console.error err
+          callback? err: err.message
+        return
       # todo: set timeout for login
       # todo: manage clients
     @
@@ -150,6 +150,7 @@ class Channel
 
   msg: (msg) -> # broadcast message
     #todo: add a on message handler
+    #todo: add msg filter
     # gen a uniq ts
     ts = new Date().getTime()
     ts++ while @records.index[ts]?
