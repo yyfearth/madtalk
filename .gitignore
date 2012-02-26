@@ -28,6 +28,6 @@ Desktop.ini
 
 # src
 /src/*.js
-/src/scripts/*.js
+/src/*/*.js
 !/src/scripts/lib/*.js
 /src/styles/*.css

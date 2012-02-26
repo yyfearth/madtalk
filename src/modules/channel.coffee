@@ -1,0 +1,183 @@
+###
+* server side Channel class
+* NOTICE
+* avoid calling any method of instance manually, 
+* just use Channel.create and it will handle everything
+###
+
+class Channel
+  #! please use Channel.create instead of new Channel
+  constructor: (@id, @io) ->
+    @init()
+
+  ### static ###
+  @ID_REGEX: /^\/[\w\-]+$/ # '.' is not allowed
+  @channels: []
+  @create: ({id, io}) ->
+    # default args
+    id ?= @channels.length
+    io ?= @io or throw 'no socket.io specified'
+    # normalize id to '/xxxxx'
+    id = '/' + id unless /^\//.test id
+    throw 'id #{id} should be consist of 0-9,A-Z,a-z,_,-' unless @ID_REGEX.test id
+    id = id.toLowerCase()
+    # return exist channel
+    return @channels.index[id] if @channels.index[id]?
+    # create new channel
+    channel = new @ id, io
+    @channels.push @channels.index[id] = channel
+    channel
+  # end of static create
+  @has: (id) ->
+    id = id.id if id.id?
+    id = '/' + id unless /^\//.test id
+    @channels.index[id.toLowerCase()]?
+
+  ### public ###
+  init: -> # call by constuctor or manual after set id and io
+    throw 'cannot init without id or io' unless @id and @io
+    @ts = @last = new Date().getTime()
+    @records = []
+    @records.index = {} # indexed by ts
+    @users = []
+    @users.index = {} # indexed by nick and sid
+    @clients = @io.of @id
+    @clients.channel = @
+    # bind fns to client.io ! JS 1.8.5
+    @on = @clients.on.bind @clients
+    @emit = @clients.emit.bind @clients
+    console.log 'channel created', @id
+    # auto start listening
+    @listen on if @auto_listen isnt off
+    @
+  # end of init
+
+  listen: -> # start listening, auto start when init
+    console.log 'start listening channel', @id
+    @on 'connection', (client) =>
+      # start listen for login
+      console.log 'a user conn, wait for login ...', client.id
+      client.on 'login', (user, callback) =>
+        console.log 'req login', user
+        client.user = user
+        #try
+        do =>
+          @validate client, (user) =>
+            # bind event handlers
+            @handle client
+            # send login callback
+            callback? user
+            # push sync
+            @sync client
+        #catch err
+        #  callback? err: err.message
+        #return
+      # todo: set timeout for login
+      # todo: manage clients
+    @
+  # end of listen
+
+  validate: (client, callback) -> # check user add add to users
+    throw 'invalid client' unless client?.user
+    user = client.user
+    throw 'invalid user' unless user?.nick
+    # for no user auth now, only allow single client per user
+    throw 'nickname duplication' if @users.index[user.nick]?.online
+    # todo: more exception
+    # todo: user system, check
+
+    # create or update user and reg to users
+    if user.id and (u = @users.index[id])?
+      # offline user
+      delete @users.index[id]
+      if u.nick isnt user.nick
+        # u.old_nick = u.nick # do not care, as a new user
+        u.nick = user.nick # overwrite
+      u.sid = client.id
+      user = u # pick org user info
+    else if user.nick and (u = @users.index[user.nick])?
+      # not offline user, and nick dup
+      throw 'nickname duplication' if u.online
+      u.sid = client.id
+      user = u # pick org user info
+    else # new user
+      user.sid = client.id
+      @users.push user # add user to list
+    @users.index[user.nick] = @users.index[user.sid] = user # build index
+    client.user = user
+    # return user
+    callback? user
+    @
+  # end of validate
+
+  handle: (client) -> # add listeners to a client, no callback yet
+    user = client.user
+    # set status
+    user.status = 'online'
+    user.online = yes
+    # broadcast one user connected
+    client.broadcast.emit 'online', user
+    @last = new Date().getTime() # last upt ts
+    # listen and re-broadcast messages
+    client.on 'message', (data, callback) ->
+      data.user = user
+      client.channel.msg data
+      callback yes
+    # sync req
+    client.on 'sync', (data, callback) =>
+      last = data.last or data.ts or 0
+      callback
+        records: @records.filter (r) -> r.ts >= last
+        users: @users
+        last: @last # last update ts
+        init: @ts # channel ts
+        ts: new Date().getTime() # cur ts
+    # user offline
+    client.on 'disconnect', ->
+      user.status = 'offline'
+      user.online = no
+      client.broadcast.emit 'offline', user
+    # user leave channel
+    client.on 'leave', =>
+      @users[user.id] = null # not delete
+      delete @users.index[user.nick]
+      delete @users.index[user.sid]
+      client.broadcast.emit 'leave', user
+    @
+      # todo: drop res
+  # end of handle
+
+  msg: (msg) -> # broadcast message
+    #todo: add a on message handler
+    # gen a uniq ts
+    ts = new Date().getTime()
+    ts++ while @records.index[ts]?
+    msg.ts = ts
+    # add to records
+    msg.id = @records.length
+    @records.push @records.index[ts] = msg
+    @last = msg.ts # last upt ts
+    # broadcast to all user including sender
+    console.log msg
+    @emit 'message', msg
+    @
+  # end of msg
+
+  sync: (client = @clients) -> # ask spec user or all users to sync
+    client.emit 'sync',
+      last: @last # last update ts
+      init: @ts # channel ts
+      ts: new Date().getTime() # cur ts
+    @
+  # end of sync
+
+do -> # Channel helper
+  C = Channel
+  C.channels.index = {} # indexed by id
+  # alias
+  C::broadcastMessage = C::sendMessage = C::msg
+  C::askSync = C::sync
+  C::addUser = C::checkUser = C::validate
+  C::handleUser = C::handle
+
+exports.Channel = Channel if exports?

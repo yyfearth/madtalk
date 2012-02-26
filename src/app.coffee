@@ -11,6 +11,8 @@ io.set 'transports', [
 fs = require 'fs'
 stylus = require 'stylus'
 xcoffee = require 'extra-coffee-script'
+# modules
+{Channel} = require './modules/Channel'
 
 port = 8008
 
@@ -23,9 +25,8 @@ app.configure ->
 
 app.get '/', (req, res) ->
   console.log 'A client has requested this route.'
-  #id = new Date().getTime()
-  #id++ while channels.index[id]
-  id = 0 # test
+  id = new Date().getTime()
+  id++ while Channel.has id
   res.redirect '/' + id
 
 app.get '/client.css', (req, res) ->
@@ -51,71 +52,15 @@ app.get '/client.js', (req, res) ->
     res.end js, 'utf-8'
   #console.log 'stylus', css
 
-app.get /^\/[\w\-]+\/?$/, (req, res) -> # '.' is not allowed
+app.get /^\/.+?\/$/, (req, res) -> # /id/ -> /id
+  res.redirect req.url[0...-1], 301
+
+app.get Channel.ID_REGEX, (req, res) -> # '.' is not allowed
+  # create channel
+  id = req.url
+  Channel.create {id, io} unless Channel.has id
+  # render index
   res.render 'index', dev: yes
-
-channels = []
-channels.index = {}
-
-id = 0 # test
-
-channel = io.of '/' + id
-channel.records = []
-channel.users = []
-channel.users.index = {}
-channel.ts = new Date().getTime()
-
-channel.on 'connection', (socket) ->
-  console.log 'a user conn, wait for login ...', socket.id
-  socket.on 'login', (user, callback) ->
-    # if user is valid
-    return callback err: 'invalid user' unless user?.nick
-
-    # valid user
-    if user.id and (u = channel.users.index[id])?
-      # offline user
-      delete channel.users.index[id]
-      if u.nick isnt user.nick
-        # u.old_nick = u.nick # do not care, as a new user
-        u.nick = user.nick # overwrite
-      u.uid = socket.id
-      user = u # pick org user info
-    else if user.nick and (u = channel.users.index[user.nick])?
-      # not offline user, and nick dup
-      return callback err: 'dup nick' if u.status isnt 'offline'
-      u.uid = socket.id
-      user = u # pick org user info
-    else # new user
-      user.uid = socket.id
-      channel.users.push user # add user to list
-    channel.users.index[user.nick] = channel.users.index[user.uid] = user # build index
-
-    user.status = 'online'
-    # broadcast one user connected
-    # broadcasting means sending a message to everyone ELSE
-    socket.broadcast.emit 'online', user
-    # listen and re-broadcast messages
-    socket.on 'message', (data, callback) ->
-      data.user = user
-      data.ts = new Date().getTime()
-      console.log data
-      # broadcasting means sending a message to everyone ELSE
-      #socket.broadcast.emit 'message', data
-      channel.emit 'message', data
-      channel.records.push data
-      callback yes
-
-    socket.on 'disconnect', ->
-      user.status = 'offline'
-      socket.broadcast.emit 'offline', user
-      # todo: drop res
-
-    #records = channel.records#.filter (rec) ->
-    # callback to user for successful login
-    callback user,
-      records: channel.records
-      users: channel.users
-      ts: channel.ts
 
 app.listen port
 console.log "app listening on port #{port} ..."

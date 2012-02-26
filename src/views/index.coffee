@@ -3,8 +3,6 @@
 
 #h1 @title
 
-partial 'login'
+text @partial 'login'
 
-partial 'chat'
-
-#partial 'partial', [1..10]
+text @partial 'chat'
