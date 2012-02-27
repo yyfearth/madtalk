@@ -1,5 +1,5 @@
 div '#chat', hidden: 'hidden', ->
-  ul '#log', ->
+  ul '#msglog', ->
     li '.log', -> '(none)'
   div '#panel', ->
     ul '#status', ->

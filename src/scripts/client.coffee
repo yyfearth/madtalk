@@ -12,7 +12,7 @@ import 'lib/socket.io.js'
 import 'lib/showdown.js'
 # import modules
 import 'channel'
-import 'login'
+import 'views'
 import 'xss_safe'
 
 id = location.pathname
@@ -28,7 +28,11 @@ catch e
   console.error 'bad user session data', e
   user = null
 
-window.channel = channel = Channel.create {id, io, user}
+window.channel = View.channel = channel = Channel.create {id, io, user}
+
+login = null
+msglog = null
+pannel = null
 
 _log = null
 _users = null
@@ -56,10 +60,6 @@ add_log = (recs) ->
 
   return
 
-login = Login.create el: '#login', user: user, login: (user) ->
-  channel.user = user
-  channel.login()
-
 auto_save = ->
   #todo: use localstorage with sid
   sessionStorage.auto_save = _entry?.val() or ''
@@ -68,6 +68,8 @@ auto_save = ->
 setInterval auto_save, 30000 # 30s
 
 channel.listeners.logined = (user) ->
+  msglog.show yes
+
   el = document.querySelector '#chat'
   el.hidden = false
   $('#user-nick').text user.nick
@@ -88,6 +90,12 @@ channel.listeners.loginfailed = (err) ->
 channel.listeners.aftersync = (ch) ->
   _log.empty()
   add_log ch.records
+  if ch.title
+    ch.title = ch.title.replace /<.+?>|\n/g, ' '
+    document.title = "Channel #{ch.title} - MadTalk"
+  else
+    document.title = "A New Channel #{channel.id[1..]} - MadTalk"
+  # doto: show title and creator in header
 
   online_u = channel.users.filter (u) -> u.status isnt 'offline'
   _users.text "#{online_u.length} / #{channel.users.length}"
@@ -106,9 +114,15 @@ channel.listeners.afterleave = ->
 channel.listeners.connected = (ch) ->
   $ -> # dom ready
     console.log 'domready'
+
+    login = Login.create el: '#login', auto: on
+    msglog = MsgLog.create el: '#msglog', auto: on
+
+    console.log login
+
     $('#conn-status').text 'online'
 
-    _log = $ '#log'
+    _log = $ '#msglog'
     _users = $ '#users-list'
     _toolbar = $ '#panel'
     _entry = $ '#entry'
@@ -154,8 +168,6 @@ channel.listeners.connected = (ch) ->
       else if e.keyCode is 40
         get_history no unless /\n/.test @value
     
-    ent = _entry.change()
-
-    login.init() unless login.inited
+    _entry.change()
 
     return

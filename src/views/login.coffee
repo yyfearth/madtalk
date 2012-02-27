@@ -10,4 +10,8 @@ div '#login', hidden: true, -> form action: '#', method: 'POST', ->
       autofocus: on
       required: on
       maxlength: 32
-    input type: 'submit', value: 'Join'
+    input
+      type: 'submit'
+      value: 'Join'
+      pattern: /^[^\x00-\x17\x7f<">]{3,30}$/
+      maxlength: 30

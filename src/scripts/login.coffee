@@ -1,46 +1,43 @@
+# imported by views.coffee
 
-class Login
-  constructor: (@cfg = el: '#login') ->
-    @user = if @cfg.user?.nick then @cfg.user else null
-    @login = @cfg.login if typeof @cfg.login is 'function'
-
-    ### private ###
-    _el = null
-
-    ### public ###
-    Object.defineProperties @,
-      el:
-        get: -> _el
-        set: (value) ->
-          _el = value
-          _el = document.querySelector _el if typeof _el is 'string'
-      inited: get: -> _el?
-      hidden: get: -> _el.hidden
+class Login extends View
+  type: 'login'
+  constructor: (@cfg) ->
+    # PLEASE USE View.create 'login', cfg instead of new
+    Object.defineProperties @, # form value shotcuts
+      nick: get: -> @form?.nick.value
+    console.log 'constructor login'
+    super @cfg # with auto init
+  # end of constructor
 
   ### static ###
-  @create: (cfg) -> new @ cfg
+  @create: (cfg) -> super @, cfg
   ### public ###
   init: ->
-    return if @inited
-    console.log 'init'
-    @el = @cfg.el if @cfg.el
-    @show not @user?.nick
+    super()
     @form = @el.querySelector 'form'
     @form.onsubmit = (e) =>
       e.preventDefault()
-      @user = nick: @form.nick.value
-      @show off
-      @login? @user
+      @login nick: @nick
       false
-    @login? @user if @user?.nick
+    # end of form submit
+    if @channel.user?.nick
+      # auto login
+      console.log 'auto login', @channel.user.nick
+      @login null
+    else
+      console.log 'show login form'
+      @show yes
     @
-
-  show: (show = yes) ->
-    console.log 'show', show, @el
-    @el.hidden = not show
+  # end of init
+  login: (user) ->
+    @channel.user = user if user?.nick
+    @channel.login (err) =>
+      if err
+        alert 'login failed'
+      else
+        @show off
+      return
     @
-
-  hide: ->
-    @show off
-
+  # end of login
 
