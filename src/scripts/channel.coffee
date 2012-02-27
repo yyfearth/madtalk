@@ -71,7 +71,7 @@ class Channel
     @
   # end of connect
 
-  login: -> # do login, called by outside
+  login: (callback) -> # do login, called by outside
     return @ if @logined
     throw 'no user info' unless @user?.nick
     console.log 'do_login', @user
@@ -79,10 +79,12 @@ class Channel
       if upduser.err
         #throw upduser.err
         @listeners.loginfailed? upduser.err # call logined
+        callback? upduser.err
       @user.sid = upduser.sid
-      return if false is @listeners.logined? user # call logined
+      return if false is @listeners.logined? @user # call logined
       @logined = yes
       @listen()
+      callback? null # no err
     @
   # end of login
 
@@ -96,14 +98,14 @@ class Channel
   # end of record
 
   ### send message
-  @param msg {object} messsage data { data: 'xxx', type: 'text|gfm|md|...' }
-  @param callback {function} server bcase success function (bool ok)
+  @param msg {object} messsage data {data: 'xxx', type: 'text|gfm|md|...'}
+  @param callback {function} server boardcase successful, function (bool ok)
   ###
   msg: (msg, callback) ->
     throw 'not logined' unless @logined
     throw 'invalid msg data' unless msg?.data
     msg.type ?= 'text'
-    msg.user = @user
+    #msg.user = @user server will discard this
     if typeof callback is 'function'
       callback = (ok) -> callback ok
     else
@@ -121,6 +123,8 @@ class Channel
       last: @last
     , (ch) =>
       return @ if false is @listeners.beforesync? ch # call event listeners
+      @info = ch
+      #@id = ch.id
       @users = ch.users # included me
       @users.index = {}
       ch.users.forEach (u) => @users.index[u.nick] = u
@@ -128,6 +132,8 @@ class Channel
         ch.records.forEach (r) => @record r
       @init = ch.init # channel init time
       @last = ch.last # last update
+      @title = ch.title
+      @creator = ch.creator
       @listeners.aftersync? ch # call after event listeners
       @
     @
@@ -136,7 +142,7 @@ class Channel
   leave: -> @fire 'leave'
   
   listen: ->
-    @on 'sync', (ch) => @sync() # req sync
+    @on 'sync', (ch) => @sync ch.force is yes # req sync
 
     @bind 'message'
 
@@ -184,7 +190,7 @@ class Channel
       console.error upduser
       return
     beforesystem: (msg) ->
-      console.log 'got system message', data
+      console.log 'got system message', msg
       true
     beforemessage: (msg) ->
       console.log 'got message', msg

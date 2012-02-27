@@ -43,6 +43,8 @@ class Channel
     @users.index = {} # indexed by nick and sid
     @clients = @io.of @id
     @clients.channel = @
+    # Object.defineProperties @,
+      # creator/admin
     # bind fns to client.io ! JS 1.8.5
     @on = @clients.on.bind @clients
     @emit = @clients.emit.bind @clients
@@ -62,6 +64,16 @@ class Channel
         client.user = user
         try
           @validate client, (user) =>
+            # the 1st logined user is the creator
+            unless @creator?
+              user.creator = yes
+              @creator = user
+              console.log 'the creator', user.nick
+              @system client, "Welcome #{user.nick}! 
+You are the creator of this channel. 
+Your first valid message will be the title of the channel!"
+            else if user.creator? and user isnt @creator 
+              delete user.creator
             # bind event handlers
             @handle client
             # send login callback
@@ -77,10 +89,11 @@ class Channel
     @
   # end of listen
 
+  _nick_regex: /^[^\x00-\x17\x7f<">]{3,30}$/ # 3-30
   validate: (client, callback) -> # check user add add to users
     throw 'invalid client' unless client?.user
     user = client.user
-    throw 'invalid user' unless user?.nick
+    throw 'invalid or empty nickname' unless user?.nick and @_nick_regex.test user.nick
     # for no user auth now, only allow single client per user
     throw 'nickname duplication' if @users.index[user.nick]?.online
     # todo: more exception
@@ -119,24 +132,34 @@ class Channel
     client.broadcast.emit 'online', user
     @last = new Date().getTime() # last upt ts
     # listen and re-broadcast messages
-    client.on 'message', (data, callback) =>
-      data.user = user
-      @msg data
+    client.on 'message', (msg, callback) =>
+      console.log 'a bad msg', msg, msg.user.nick unless msg?.data
+      # the 1st msg from creator is the title if len > 3 after filered
+      @_title client, msg.data if not @title and user is @creator
+      # msg
+      msg.user = user
+      @msg msg
       callback? yes # may exists
+      return
     # sync req
     client.on 'sync', (data, callback) =>
       last = data.last or data.ts or 0
       callback # must exists
+        id: @id
         records: @records.filter (r) -> r.ts >= last
         users: @users
         last: @last # last update ts
         init: @ts # channel ts
+        creator: @creator # todo: simplify data
+        title: @title or null
         ts: new Date().getTime() # cur ts
+      return
     # user offline
     client.on 'disconnect', ->
       user.status = 'offline'
       user.online = no
       client.broadcast.emit 'offline', user
+      return
     # user leave channel
     client.on 'leave', =>
       console.log 'user leave', user.nick, user.sid
@@ -144,12 +167,30 @@ class Channel
       delete @users.index[user.nick]
       delete @users.index[user.sid]
       client.broadcast.emit 'leave', user
-    @
       # todo: drop res
+      return
+    @
   # end of handle
+
+  _title: (client, title) -> # set title
+    #console.log 'org msg for title', title
+    title = title.replace /[\x00-\x1f\n\r\t\s]+|(?:<[^><]{6,}>)/g, ' '
+    #console.log 'title after trim', title
+    if title.length > 3
+      title = title[0...29] + '\u2026' if title.length > 30 # add ...
+      console.log 'set title', title
+      @title = title
+      #@sync client, yes
+      @sync yes # all, force
+      @system client, "Your message '#{title}' has been set as title!"
+    else
+      @system client, "Your message '#{title}' is to too short or not suitable to set as title!"
+    @
+  # end of title
 
   msg: (msg) -> # broadcast message
     #todo: add a on message handler
+    msg.type ?= 'text'
     #todo: add msg filter
     # gen a uniq ts
     ts = new Date().getTime()
@@ -165,10 +206,20 @@ class Channel
     @
   # end of msg
 
-  sync: (client = @clients) -> # ask spec user or all users to sync
-    client.emit 'sync',
+  system: (client = @clients, msg) ->
+    console.log 'system', msg
+    client.emit 'system',
+      type: 'gfm'
+      data: msg
+      ts: new Date().getTime() # cur ts
+
+  sync: (client = @clients, force) -> # ask spec user or all users to sync
+    if client is yes and not force?
+      force = yes
+      client = @clients
+    client.emit 'sync', # this is NOT channel sync data!
+      force: Boolean force
       last: @last # last update ts
-      init: @ts # channel ts
       ts: new Date().getTime() # cur ts
     @
   # end of sync
