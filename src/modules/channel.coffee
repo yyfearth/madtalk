@@ -89,7 +89,7 @@ Your first valid message will be the title of the channel!"
     @
   # end of listen
 
-  _nick_regex: /^[^\x00-\x17\x7f<">]{3,30}$/ # 3-30
+  _nick_regex: /^[^\x00-\x17\x7f<">]{3,30}$/ # 3-30 no:[\x00-\x17\x22\x3c\x3e\x7f]
   validate: (client, callback) -> # check user add add to users
     throw 'invalid client' unless client?.user
     user = client.user
