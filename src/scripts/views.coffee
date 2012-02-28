@@ -1,4 +1,6 @@
 
+import 'xss_safe'
+
 class View # view controller base class
   constructor: (@cfg) ->
     # PLEASE USE View.create 'view', cfg instead of new
@@ -25,6 +27,7 @@ class View # view controller base class
   ### static ###
   # @view: 'view' the name of view, subclass must have this
   # @create: moved to the end of file
+  xss: xss_safe # util
   ### public ###
   init: ->
     unless @inited # to ensure run only once
