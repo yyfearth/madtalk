@@ -10,6 +10,7 @@ include jquery socket.io showdown
 import 'lib/jquery.js'
 #import 'lib/socket.io.js'
 # import modules
+import 'polyfills'
 import 'channel'
 import 'views'
 
@@ -57,7 +58,7 @@ init = ->
       _e.style.height = 'auto'
       _e.style.height = "#{Math.min Math.max(46, _e.scrollHeight), window.innerHeight / 2}px"
 
-      _log.css 'padding-bottom', _toolbar.outerHeight() + 10 + 'px' # log resize
+      _log.css 'bottom', _toolbar.outerHeight() + 'px' # log resize
     , 0
   _entry.bind
     keydown: resize

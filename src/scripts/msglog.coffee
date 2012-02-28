@@ -51,7 +51,8 @@ class MsgLog extends View
 
   scroll: (immediately = no) ->
     if immediately
-      window.scrollTo 0, document.body.scrollHeight
+      @el.lastChild.scrollIntoView()
+      #window.scrollTo 0, document.body.scrollHeight
     else
       setTimeout =>
         @scroll yes

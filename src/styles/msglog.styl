@@ -1,14 +1,19 @@
 #msglog
+  display block
+  position absolute
+  left 0
+  right 0
+  top 0
+  bottom 10em // default
   padding 0.5em
-  padding-bottom 10em // default
-  background inherit
-  overflow hidden
+  background transparent
+  overflow scroll
   margin 0
   > li
     display block
     padding 0
-    margin 1px 0 0 0
-    border-radius 0.5em
+    margin 0.5px 0 0 0
+    border-radius 0.3em
     background-color lighten($bkg-color, 2%)
     transitions all 0.3s ease-in-out
     opacity 0.88
@@ -27,6 +32,13 @@
       color darken($font-color, 25%)
       padding 0.3em
       padding-right: 0.5em
+      .nick, .ts
+        display block
+        text-align center
+      .nick
+        color #cd5
+        font-weight bold
+        min-height 1em
     > .data
       padding 0.1em 0.5em
       display inline-block
@@ -41,21 +53,13 @@
         margin-top 0.3em
       *:last-child
         margin-bottom 0.3em
-
-// not very important info
-.notice td, .join td, .part td, .message .date
-  color #555
-.error td
-  color #933
-.personal .nick, .notice .nick
-  color #cd5
-.message
-  margin 0.1em 0
-  td
-    vertical-align top
-
-.nick
-  font-weight bold
-  padding 0 1em 0 0.5em
-  a
-    color inherit
+    // data color
+    &.message > .data
+      color #fff
+    &.system > .data
+      color #555
+    &.offline > .data
+        color #555
+        font-style italic
+    //.error > .data
+    //  color #933

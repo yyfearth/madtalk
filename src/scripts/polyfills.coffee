@@ -1,3 +1,22 @@
+
+unless Function::bind?
+  Function::bind = (oThis) ->
+    # closest thing possible to the ECMAScript 5 internal IsCallable function  
+    if typeof @ isnt 'function'
+      throw new TypeError 'Function.prototype.bind - what is trying to be bound is not callable'
+   
+    aArgs = Array::slice.call(arguments, 1)
+    fToBind = @
+    fNOP = -> ;
+    fBound = ->
+      fToBind.apply (if @ instanceof fNOP then @ else oThis or window),  
+        (aArgs.concat Array.prototype.slice.call arguments)
+
+    fNOP.prototype = @prototype;  
+    fBound.prototype = new fNOP();  
+  
+    fBound;  
+
 ###
 Returns a description of this past date in relative terms.
 Takes an optional parameter (default: 0) setting the threshold in ms which
