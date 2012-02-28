@@ -1,20 +1,21 @@
 #msglog
+  padding 0.5em
   padding-bottom 10em // default
   background inherit
   overflow hidden
-  margin auto
-  padding-top 0.5em
-  background-color $bkg-color
+  margin 0
   > li
-    //display block
+    display block
     padding 0
-    margin 1px 0 0 auto
+    margin 1px 0 0 0
     border-radius 0.5em
     background-color lighten($bkg-color, 2%)
     transitions all 0.3s ease-in-out
+    opacity 0.88
     &:nth-child(even)
       background-color lighten($bkg-color, 3%)
     &:hover
+      opacity 0.99
       background-color lighten($bkg-color, 10%)
     > .info
       font-size 14px

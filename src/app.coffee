@@ -18,6 +18,7 @@ io.set 'transports', [
 # for compile
 fs = require 'fs'
 stylus = require 'stylus'
+#nib = require 'nib'
 xcoffee = require 'extra-coffee-script'
 # modules
 {Channel} = require './modules/channel'
@@ -41,6 +42,12 @@ app.get '/client.css', (req, res) ->
   filename = __dirname + '/styles/client.styl'
   fs.readFile filename, 'utf-8', (err, code) ->
       throw err if err
+      # stylus(code)
+      # .set('filename', filename)
+      # .set('paths', [__dirname + '/styles/'])
+      # .set('compress', on)
+      # .use(nib())
+      # .render (err, css) ->
       stylus.render code, 
         filename: filename
         paths: [__dirname + '/styles/']
