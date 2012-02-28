@@ -27,6 +27,7 @@ class Login extends View
       @login null
     else
       console.log 'show login form'
+      document.title = "Login - MadTalk"
       @show yes
     @
   # end of init
@@ -40,4 +41,3 @@ class Login extends View
       return
     @
   # end of login
-

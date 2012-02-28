@@ -81,6 +81,9 @@ class Channel
         @listeners.loginfailed? upduser.err # call logined
         callback? upduser.err
       @user.sid = upduser.sid
+      @user.id = upduser.id
+      @user.status = upduser.status
+      # copy all user props?
       return if false is @listeners.logined? @user # call logined
       @logined = yes
       @listen()
@@ -89,9 +92,11 @@ class Channel
   # end of login
 
   record: (rec) -> # add record
-    if (r = @records.index[rec.ts])? # exists
-      @records[r.idx] = @records.index[r.ts] = rec # overwrite?
-    else # new
+    #if (r = @records.index[rec.ts])? # exists
+      #@records[r.idx] = @records.index[r.ts] = rec
+      # no overwrite
+    #else # new
+    unless @records.index.hasOwnProperty rec.ts
       rec.idx = @records.length
       @records.push @records.index[rec.ts] = rec
     @
@@ -132,7 +137,7 @@ class Channel
         ch.records.forEach (r) => @record r
       @init = ch.init # channel init time
       @last = ch.last # last update
-      @title = ch.title
+      @title = ch.title?.replace /<.+?>|\n/g, ' '
       @creator = ch.creator
       @listeners.aftersync? ch # call after event listeners
       @
@@ -156,9 +161,10 @@ class Channel
   # end of listen
 
   ### events ###
-  onleave: -> @emit 'leave'
-  onmessage: (msg) -> @record msg
+  onleave: -> @emit 'leave' if @logined
+  onmessage: (msg) -> @record msg if @logined
   onuserjoin: (user) -> # status must be online or offline
+    return unless @logined
     status = if user.online then 'online' else 'offline'
     return @ if false is @listeners["beforeuser#{status}"]? user # call before event listeners
     @users.push user unless @users.index[user.nick]?
@@ -166,6 +172,7 @@ class Channel
     @listeners["afteruser#{status}"]? user # call before event listeners
     return
   onuserleave: (user) ->
+    return unless @logined
     if user.sid is @user.sid and user.kicked # kicked
       @leave() # ask to leave
     else if (u = @users.index[user.nick])?

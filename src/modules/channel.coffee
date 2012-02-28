@@ -89,7 +89,7 @@ Your first valid message will be the title of the channel!"
     @
   # end of listen
 
-  _nick_regex: /^[^\x00-\x17\x7f<">]{3,30}$/ # 3-30 no:[\x00-\x17\x22\x3c\x3e\x7f]
+  _nick_regex: /^[^\x00-\x17\x22\x3c\x3e\x7f]{3,30}$/ # 3-30 no:[\x00-\x17\x22\x3c\x3e\x7f]
   validate: (client, callback) -> # check user add add to users
     throw 'invalid client' unless client?.user
     user = client.user
@@ -137,7 +137,10 @@ Your first valid message will be the title of the channel!"
       # the 1st msg from creator is the title if len > 3 after filered
       @_title client, msg.data if not @title and user is @creator
       # msg
-      msg.user = user
+      msg.user = # limit user info
+        id: user.id
+        nick: user.nick
+        # more?
       @msg msg
       callback? yes # may exists
       return

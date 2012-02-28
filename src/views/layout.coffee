@@ -10,7 +10,9 @@ html ->
     # link rel: 'icon', href: '/favicon.png'
     link rel: 'stylesheet', href: '/client.css'
 
-    script src: '/client.js', async: 'async'
+    if @dev
+      script src: '/socket.io/socket.io+websocket.js', defer: true
+    script src: '/client.js', defer: true
 
     # coffeescript ->
     #   $(document).ready ->
@@ -24,7 +26,7 @@ html ->
     # '''
 
   body ->
-    header ->
+    # header ->
       # a href: '/', title: 'Home', -> 'Home'
 
       # nav ->
@@ -38,5 +40,5 @@ html ->
 
     div '#app', -> @body
 
-    footer ->
+    # footer ->
       # p -> a href: '/privacy', -> 'Privacy Policy'
