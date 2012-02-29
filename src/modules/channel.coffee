@@ -129,7 +129,12 @@ Your first valid message will be the title of the channel!"
     user.status = 'online'
     user.online = yes
     # broadcast one user connected
-    client.broadcast.emit 'online', user
+    client.broadcast.emit 'online',
+        nick: user.nick
+        id: user.id
+        status: user.status
+        ts: new Date().getTime()
+    # end of brodcast
     @last = new Date().getTime() # last upt ts
     # listen and re-broadcast messages
     client.on 'message', (msg, callback) =>
@@ -161,7 +166,11 @@ Your first valid message will be the title of the channel!"
     client.on 'disconnect', ->
       user.status = 'offline'
       user.online = no
-      client.broadcast.emit 'offline', user
+      client.broadcast.emit 'offline',
+        nick: user.nick
+        id: user.id
+        status: user.status
+        ts: new Date().getTime()
       return
     # user leave channel
     client.on 'leave', =>

@@ -26,10 +26,10 @@ class MsgLog extends View
       return if msg.rendered # is msg.ts for modifies
       # todo: renderer
       li = document.createElement 'li'
-      li.classList.add 'log'
-      li.classList.add msg.type if msg.type
+      li.className = 'log ' + msg.class or 'message' # default is message
+      li.className += ' ' + msg.type if msg.type
       nick = if msg.user?.nick then @xss.str msg.user.nick else ''
-      ts = new Date(msg.ts).toLocaleTimeString()
+      ts = new Date(msg.ts or new Date).toLocaleTimeString()
       li.innerHTML = "<div class=\"info\">
         <label class=\"nick\">#{nick}</label>
         <label class=\"ts\">#{ts}</label></div>
@@ -45,13 +45,14 @@ class MsgLog extends View
     text: (data) -> @xss.str(data).replace /\n/g, '<br/>'
     gfm: (sd = new Showdown.converter()).makeHtml.bind sd #! JS 1.8.5
   render: ({type, data}) ->
-    throw "unknown type to render #{type}" unless @renderers.hasOwnProperty type
+    #throw "unknown type to render #{type}" unless @renderers.hasOwnProperty type
+    type = 'text' unless @renderers.hasOwnProperty type
     @renderers[type].call @, data
   # end of render
 
   scroll: (immediately = no) ->
     if immediately
-      @el.lastChild.scrollIntoView()
+      @el.lastChild?.scrollIntoView()
       #window.scrollTo 0, document.body.scrollHeight
     else
       setTimeout =>

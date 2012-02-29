@@ -136,12 +136,27 @@ listeners =
     return
 
   disconnected: ->
+    msglog.append
+      data: "You are offline now."
+      class: 'offline'
     $('#conn-status').text 'offline'
     return
   aftermessage: (msg) ->
     msglog.append msg
   aftersystem: (msg) ->
+    msg.class = 'system'
     msglog.append msg
+  afteruseronline: (user) ->
+    alert 1
+    msglog.append
+      data: "User #{user.nick} is online now."
+      class: 'offline'
+      ts: user.ts
+  afteruseroffline: (user) ->
+    msglog.append
+      data: "User #{user.nick} is offline now."
+      class: 'offline'
+      ts: user.ts
   afterleave: ->
     #todo: leave and logout
   connected: ->

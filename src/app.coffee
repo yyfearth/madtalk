@@ -34,7 +34,7 @@ app.configure ->
 
 app.get '/', (req, res) ->
   console.log 'A client has requested this route.'
-  id = new Date().getTime()
+  id = new Date().getTime().toString 36
   id++ while Channel.has id
   res.redirect '/' + id
 

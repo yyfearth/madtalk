@@ -207,9 +207,11 @@ class Channel
       console.log 'got sync data', ch
       true
     # aftersync: (ch) ->
-    # beforeuseronline: (user) ->
+    beforeuseronline: (user) ->
+      console.log 'user online', user
     # afteruseronline: (user) ->
-    # beforeuseroffline: (user) ->
+    beforeuseroffline: (user) ->
+      console.log 'user offline', user
     # afteruseroffline: (user) ->
     # beforeuserleave: (user) ->
     # afteruserleave: (user) ->
