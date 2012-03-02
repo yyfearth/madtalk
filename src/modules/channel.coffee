@@ -131,7 +131,7 @@ Your first valid message will be the title of the channel!"
     # broadcast one user connected
     client.broadcast.emit 'online',
         nick: user.nick
-        id: user.id
+        #id: user.id
         status: user.status
         ts: new Date().getTime()
     # end of brodcast
@@ -143,7 +143,7 @@ Your first valid message will be the title of the channel!"
       @_title client, msg.data if not @title and user is @creator
       # msg
       msg.user = # limit user info
-        id: user.id
+        #id: user.id
         nick: user.nick
         # more?
       @msg msg
@@ -164,11 +164,13 @@ Your first valid message will be the title of the channel!"
       return
     # user offline
     client.on 'disconnect', ->
+      console.log 'disconnect', client.user
+      return unless user.online
       user.status = 'offline'
       user.online = no
       client.broadcast.emit 'offline',
         nick: user.nick
-        id: user.id
+        #id: user.id
         status: user.status
         ts: new Date().getTime()
       return

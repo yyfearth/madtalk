@@ -194,7 +194,7 @@ class Channel
     return unless @logined
     status = if user.online then 'online' else 'offline'
     return @ if false is @listeners["beforeuser#{status}"]? user # call before event listeners
-    @users.push user unless @users.index[user.nick]?
+    @users.push @users.index[user.nick] = user unless @users.index[user.nick]?
     @users.index[user.nick].status = user.status
     @listeners["afteruser#{status}"]? user # call before event listeners
     return
