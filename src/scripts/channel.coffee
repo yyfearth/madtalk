@@ -25,11 +25,31 @@ class Channel
     @records.index = {} # index by ts
     @users = []  # overwrite while sync
     @logined = no
+    @_load_user() unless @user?.nick
     console.log 'channel init', @id
     # auto connect
     @connect on if @auto_connect isnt off
     @
   # end of init
+  _load_user: -> 
+    try
+      user = sessionStorage.user
+      if user
+        user = JSON.parse user
+        throw 'bad user session data' unless user?.nick
+      else
+        user = null
+    catch e
+      console.error 'bad user session data', e
+      user = null
+    @user = user
+    return
+  _save_user: ->
+    sessionStorage.user = JSON.stringify @user if @user?.nick
+    return
+  _clear_user: ->
+    delete sessionStorage.user
+    return
 
   event_regex: ///^(:? leave
     | system | message | sync
@@ -74,12 +94,17 @@ class Channel
   login: (callback) -> # do login, called by outside
     return @ if @logined
     throw 'no user info' unless @user?.nick
-    console.log 'do_login', @user
+    console.log 'do login', @user
     @emit 'login', @user, (upduser) =>
-      if upduser.err
+      console.log 'login callback', upduser
+      unless upduser?.nick
         #throw upduser.err
-        @listeners.loginfailed? upduser.err # call logined
-        callback? upduser.err
+        # @user?.nick = null
+        err = upduser?.err or 'unknown error'
+        @listeners.loginfailed? err # call logined
+        callback? err
+        @_clear_user()
+        return
       @user.sid = upduser.sid
       @user.id = upduser.id
       @user.status = upduser.status
@@ -88,6 +113,8 @@ class Channel
       @logined = yes
       @listen()
       callback? null # no err
+      @_save_user()
+      return
     @
   # end of login
 
@@ -194,7 +221,7 @@ class Channel
       console.log 'logined', user
       return
     loginfailed: (err) ->
-      console.error upduser
+      console.error 'login failed', upduser
       return
     beforesystem: (msg) ->
       console.log 'got system message', msg

@@ -14,19 +14,19 @@ import 'polyfills'
 import 'channel'
 import 'views'
 
-try
-  user = sessionStorage.user
-  if user
-    user = JSON.parse user
-    throw 'bad user session data' unless user?.nick
-  else
-    user = null
-catch e
-  console.error 'bad user session data', e
-  user = null
+# try
+#   user = sessionStorage.user
+#   if user
+#     user = JSON.parse user
+#     throw 'bad user session data' unless user?.nick
+#   else
+#     user = null
+# catch e
+#   console.error 'bad user session data', e
+#   user = null
 
 id = location.pathname
-window.channel = View.channel = channel = Channel.create {id, io, user}
+window.channel = View.channel = channel = Channel.create {id, io}
 
 login = Login.create el: '#login'
 msglog = MsgLog.create el: '#msglog'
@@ -107,19 +107,19 @@ listeners =
     $('#conn-status').text 'online'
     $('#user-nick').text channel.user.nick
     
-    window.onbeforeunload = ->
-      #todo: use localstorage with sid
-      sessionStorage.user = if channel.user?.nick then JSON.stringify channel.user else null
-      auto_save()
-      return
+    # window.onbeforeunload = ->
+    #   #todo: use localstorage with sid
+    #   sessionStorage.user = if channel.user?.nick then JSON.stringify channel.user else null
+    #   auto_save()
+    #   return
 
     # save_text = sessionStorage.auto_save or ''
     # _entry.val(save_text)[0].selectionStart = save_text.length
     return
 
-  loginfailed: (err) ->
-    sessionStorage.user = null
-    alert 'login failed!\n' + err
+  # loginfailed: (err) ->
+    # sessionStorage.user = null
+    # alert 'login failed!\n' + err
 
   aftersync: ->
     # todo: smarter filtering
@@ -158,9 +158,10 @@ listeners =
       data: "User #{user.nick} is offline now."
       class: 'offline'
       ts: user.ts
-  afterleave: ->
+  # afterleave: ->
     #todo: leave and logout
-  connected: ->
-    $ -> init() # dom ready
+
+  # EP
+  connected: -> $ -> init() # dom ready
 
 $.extend channel.listeners, listeners
