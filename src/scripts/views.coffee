@@ -18,7 +18,7 @@ class View # view controller base class
         set: (value) ->
           _el = value
           _parent = @parent?.el or document
-          _el = _parent.querySelector _el if typeof _el is 'string'
+          _el = @query _el, _parent if typeof _el is 'string'
       height: get: -> @el.clientHeight
       width: get: -> @el.clientWidth
       inited: get: -> _el? and @init isnt _init # has el and @init isnt org
@@ -48,6 +48,10 @@ class View # view controller base class
     @el = @cfg.el if @cfg.el
     @hidden = @cfg.hidden if @cfg.hidden?
     @
+  query: (selector, parent) ->
+    (parent or @el or document).querySelector selector
+  queryAll: (selector, parent) ->
+    (parent or @el or document).querySelectorAll selector
   # end of init
   show: (show = yes) ->
     @hidden = not show
@@ -60,10 +64,10 @@ class View # view controller base class
     if el and els
       throw 'only set one of el or els'
     else if el
-      el = @el.querySelector el if typeof el is 'string'
+      el = @query el if typeof el is 'string'
       els = [el]
     else if els
-      els = [].slice.call @el.querySelectors els if typeof els is 'string'
+      els = [].slice.call @queryAll els if typeof els is 'string'
       els = [els] unless Array.isArray els
     else
       els = [@el]
@@ -107,8 +111,6 @@ import 'panel'
 
 ### chat ###
 # need import msglog, panel
-
-
 
 ### factory ###
 _views =

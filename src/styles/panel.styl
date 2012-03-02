@@ -8,22 +8,25 @@
   background rgba($bkg-color, 0.8)
   opacity 0.99 // smooth font
   //max-height 50% // by js
-  ul // #status
+  > ul // #status
     color #fff
     no-space()
     padding-left 1em
     list-style none
     box-sizing(border-box)
-    box-shadow(0 -0.2em 1em rgba(#0009))
-    transition(all 0.3s ease-in-out)
+    box-shadow(0 -0.2em 1em rgba(#0005))
+    transition(background-color 0.3s ease-in-out)
     z-index 1001
     background rgba(#7333)
-    &:hover
-      background rgba(#7339)
     li
       display inline-block
       margin 0 2em 0 0
-  textarea
+  &:hover
+    > ul
+      background rgba(#7339)
+    > textarea
+      background-color rgba($bkg-color, 0.8)
+  > textarea
     display block
     font-size inherit
     border-width 0
@@ -37,7 +40,7 @@
     min-height 3em // inc padding
     color $font-color
     z-index 1000
-    transition(background-color 0.1s ease-in-out)
+    transition(background-color 0.1s linear)
     background-color rgba($bkg-color, 0.5)
     &:focus
       background-color $bkg-color

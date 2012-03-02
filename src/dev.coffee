@@ -38,38 +38,6 @@ app.get '/', (req, res) ->
   id++ while Channel.has id
   res.redirect '/' + id
 
-#app.get '/client.css', (req, res) ->
-# stylus_file = __dirname + '/styles/client.styl'
-# compile_stylus = (callback) ->
-#   fs.readFile stylus_file, 'utf-8', (err, code) ->
-#       throw err if err
-#       # stylus(code)
-#       # .set('filename', filename)
-#       # .set('paths', [__dirname + '/styles/'])
-#       # .set('compress', on)
-#       # .use(nib())
-#       # .render (err, css) ->
-#       stylus.render code, 
-#         filename: filename
-#         paths: [__dirname + '/styles/']
-#       , (err, css) ->
-#         throw err if err
-#         callback css
-        # res.writeHead 200, 'Content-Type': 'text/css'
-        # res.end css, 'utf-8'
-  #console.log 'stylus', css
-
-# app.get '/client.js', (req, res) ->
-# coffee_file = __dirname + '/scripts/client.coffee'
-# compile_coffee = (callback) ->
-#   fs.readFile coffee_file, 'utf-8', (err, code) ->
-#     js = xcoffee.compile code, 
-#       filename: filename
-#       imports: on
-#     callback js
-    # res.writeHead 200, 'Content-Type': 'application/javascript'
-    # res.end js, 'utf-8'
-  #console.log 'stylus', css
 compile_stylus = (callback) ->
   stylus.render '@import "client"', 
     #filename: __dirname + '/styles/client.stylus'

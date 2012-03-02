@@ -171,6 +171,14 @@ class Channel
     @
   # end of sync
 
+  system: (msg) -> # local system msg
+    @fire 'system',
+      type: 'gfm'
+      data: msg
+      local: yes
+      ts: new Date().getTime()
+  # end of system
+
   leave: -> @fire 'leave'
   
   listen: ->
