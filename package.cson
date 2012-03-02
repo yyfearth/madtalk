@@ -13,7 +13,7 @@ contributors: [
 ]
 scripts:
   start: 'node server/app.js'
-  test: 'coffee src/app.coffee'
+  test: 'coffee src/dev.coffee'
 main: 'app.js'
 license: ['MIT', 'BSD']
 dependencies:
