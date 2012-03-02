@@ -14,4 +14,4 @@ div '#chat', hidden: 'hidden', ->
       rows: 1
       maxlength: 10000
       autofocus: on
-      placeholder: '>'
+      placeholder: '_'

@@ -3,7 +3,7 @@
   width 100%
   top auto
   bottom 0
-  box-sizing border-box
+  box-sizing(border-box)
   no-space()
   background rgba($bkg-color, 0.8)
   opacity 0.99 // smooth font
@@ -13,9 +13,10 @@
     no-space()
     padding-left 1em
     list-style none
-    box-sizing border-box
-    box-shadow(0 -0.3em 1em rgba(#0005))
+    box-sizing(border-box)
+    box-shadow(0 -0.2em 1em rgba(#0009))
     transition(all 0.3s ease-in-out)
+    z-index 1001
     background rgba(#7333)
     &:hover
       background rgba(#7339)
@@ -30,14 +31,15 @@
     clear both
     resize none
     width 100%
-    box-sizing border-box
+    box-sizing(border-box)
     margin 0
     padding 1em
     min-height 3em // inc padding
     color $font-color
+    z-index 1000
     transition(background-color 0.1s ease-in-out)
     background-color rgba($bkg-color, 0.5)
-    &:hover, &:focus
+    &:focus
       background-color $bkg-color
 
   #users-list

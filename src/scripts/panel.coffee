@@ -26,6 +26,7 @@ class EntryArea extends View
   ### public ###
   init: ->
     super()
+    _resize = @resize.bind @ # JS 1.8.5
     # enter / up / down
     _trvl_history = (e, up = yes) =>
       return if @history.cur < 0 and @value or /\n/.test @value
@@ -43,24 +44,21 @@ class EntryArea extends View
         @send()
         return false
       else if e.keyCode is 38
-          _trvl_history e, yes
+        _trvl_history e, yes
       else if e.keyCode is 40
-          _trvl_history e, no
+        _trvl_history e, no
+      else
+        _resize()
       return
-    # change
-    old_value = null
-    fire_change = (e) => if @value isnt old_value
-      old_value = @value
-      # todo: reduce times
-      # sessionStorage.auto_save = @value or '' # auto save
-      # console.log 'changed'
-      @fire event: 'change' # return
     # end of fire_change
-    @on event: 'keydown', handler: fire_change
-    @on event: 'cut', handler: fire_change
-    @on event: 'past', handler: fire_change
-    @on event: 'drop', handler: fire_change
-    @on event: 'change', handler: => @resize()
+    # @on event: 'keydown', handler: _resize
+    @on event: 'cut', handler: _resize
+    @on event: 'past', handler: _resize
+    @on event: 'drop', handler: _resize
+    @on event: 'change', handler: _resize
+    # placeholder
+    @on event: 'focus', handler: -> @placeholder = ''
+    @on event: 'blur', handler: -> @placeholder = '_'
     # auto save on exit
     @on el: window, event: 'unload', handler: =>
         sessionStorage.auto_save = @value or ''
@@ -72,7 +70,7 @@ class EntryArea extends View
         @el.selectionStart = @el.value.length
       , 0
     else
-      fire_change()
+      @resize()
     @
   # end of init
   send: ->
