@@ -28,9 +28,9 @@ catch e
 id = location.pathname
 window.channel = View.channel = channel = Channel.create {id, io, user}
 
-login = null
-msglog = null
-pannel = null
+login = Login.create el: '#login'
+msglog = MsgLog.create el: '#msglog'
+panel = Panel.create { el: '#panel', msglog }
 
 _users = null
 _entry = null
@@ -38,66 +38,66 @@ _entry = null
 init = ->
   console.log 'domready'
 
-  login = Login.create el: '#login', auto: on
-  msglog = MsgLog.create el: '#msglog', auto: on
+  login.init()
+  msglog.init()
+  panel.init()
 
   _users = $ '#users-list'
-  _toolbar = $ '#panel'
-  _entry = $ '#entry'
-  _entry.history = []
-  _entry.history.cur = -1 # for prev is 0
+  # _toolbar = $ '#panel'
+  # _entry = $ '#entry'
+  # _entry.history = []
+  # _entry.history.cur = -1 # for prev is 0
 
   _users.click ->
     alert channel.users.map((u) -> "#{u.nick} #{u.status}").join '\n'
 
   ###############
-  _log = $ '#msglog'
-  resize = ->
-    setTimeout ->
-      _e = _entry[0]
-      _e.style.height = 'auto'
-      _e.style.height = "#{Math.min Math.max(46, _e.scrollHeight), window.innerHeight / 2}px"
+  # do resize = ->
+  #   setTimeout ->
+  #     _e = _entry[0]
+  #     _e.style.height = 'auto'
+  #     _e.style.height = "#{Math.min Math.max(46, _e.scrollHeight), window.innerHeight / 2}px"
 
-      _log.css 'bottom', _toolbar.outerHeight() + 'px' # log resize
-    , 0
-  _entry.bind
-    keydown: resize
-    change: resize
-    cut: resize
-    past: resize
-    drop: resize
+  #     msglog.el.style.bottom = _toolbar.outerHeight() + 'px' # log resize
+  #   , 0
+  # _entry.bind
+  #   keydown: resize
+  #   change: resize
+  #   cut: resize
+  #   past: resize
+  #   drop: resize
 
-  get_history = (up = yes) ->
-    cur = _entry.history.cur + if up then 1 else -1
-    #console.log 'history', cur
-    return false if cur < 0 or cur >= _entry.history.length
-    _entry.history.cur = cur
-    _entry.val _entry.history[cur]
-    false
+  # get_history = (up = yes) ->
+  #   cur = _entry.history.cur + if up then 1 else -1
+  #   #console.log 'history', cur
+  #   return false if cur < 0 or cur >= _entry.history.length
+  #   _entry.history.cur = cur
+  #   _entry.val _entry.history[cur]
+  #   false
 
-  _entry.keydown (e) ->
-    if e.keyCode is 13 and not (e.ctrlKey or e.metaKey or e.shiftKey or e.altKey)
-      return false unless @value.trim()
-      channel.msg type: 'gfm', data: @value
-      _entry.history.unshift @value
-      _entry.history.cur = -1
-      @value = ''
-      false
-    else if e.keyCode is 38
-      get_history yes unless /\n/.test @value
-    else if e.keyCode is 40
-      get_history no unless /\n/.test @value
+  # _entry.keydown (e) ->
+  #   if e.keyCode is 13 and not (e.ctrlKey or e.metaKey or e.shiftKey or e.altKey)
+  #     return false unless @value.trim()
+  #     channel.msg type: 'gfm', data: @value
+  #     _entry.history.unshift @value
+  #     _entry.history.cur = -1
+  #     @value = ''
+  #     false
+  #   else if e.keyCode is 38
+  #     get_history yes unless /\n/.test @value
+  #   else if e.keyCode is 40
+  #     get_history no unless /\n/.test @value
   
-  _entry.change()
+  # _entry.change()
 
-  return
+  # return
 
-auto_save = ->
-  #todo: use localstorage with sid
-  sessionStorage.auto_save = _entry?.val() or ''
-  return
+# auto_save = ->
+#   #todo: use localstorage with sid
+#   sessionStorage.auto_save = _entry?.val() or ''
+#   return
 
-setInterval auto_save, 30000 # 30s
+# setInterval auto_save, 30000 # 30s
 
 listeners = 
   logined: ->
@@ -109,15 +109,16 @@ listeners =
     
     window.onbeforeunload = ->
       #todo: use localstorage with sid
-      sessionStorage.user = JSON.stringify channel.user
+      sessionStorage.user = if channel.user?.nick then JSON.stringify channel.user else null
       auto_save()
       return
 
-    save_text = sessionStorage.auto_save or ''
-    _entry.val(save_text)[0].selectionStart = save_text.length
+    # save_text = sessionStorage.auto_save or ''
+    # _entry.val(save_text)[0].selectionStart = save_text.length
     return
 
   loginfailed: (err) ->
+    sessionStorage.user = null
     alert 'login failed!\n' + err
 
   aftersync: ->
@@ -147,7 +148,7 @@ listeners =
     msg.class = 'system'
     msglog.append msg
   afteruseronline: (user) ->
-    alert 1
+    #alert 1
     msglog.append
       data: "User #{user.nick} is online now."
       class: 'offline'
