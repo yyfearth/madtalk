@@ -221,7 +221,7 @@ class Channel
       console.log 'logined', user
       return
     loginfailed: (err) ->
-      console.error 'login failed', upduser
+      console.error 'login failed', err
       return
     beforesystem: (msg) ->
       console.log 'got system message', msg

@@ -82,7 +82,7 @@ Your first valid message will be the title of the channel!"
             @sync client
         catch err
           console.error err
-          callback? err: err.message
+          callback? err: err
         return
       # todo: set timeout for login
       # todo: manage clients
