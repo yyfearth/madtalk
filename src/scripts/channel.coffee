@@ -136,7 +136,7 @@ class Channel
   msg: (msg, callback) ->
     throw 'not logined' unless @logined
     throw 'invalid msg data' unless msg?.data
-    msg.type ?= 'text'
+    msg.type ?= ''
     #msg.user = @user server will discard this
     if typeof callback is 'function'
       callback = (ok) -> callback ok
@@ -173,7 +173,6 @@ class Channel
 
   system: (msg) -> # local system msg
     @fire 'system',
-      type: 'gfm'
       data: msg
       local: yes
       ts: new Date().getTime()

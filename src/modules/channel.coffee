@@ -188,7 +188,7 @@ Your first valid message will be the title of the channel!"
 
   _title: (client, title) -> # set title
     #console.log 'org msg for title', title
-    title = title.replace /[\x00-\x1f\n\r\t\s]+|(?:<[^><]{6,}>)/g, ' '
+    title = title.replace(/[\x00-\x1f\n\r\t\s]+|(?:<[^><]{6,}>)/g, ' ').trim()
     #console.log 'title after trim', title
     if title.length > 3
       title = title[0...29] + '\u2026' if title.length > 30 # add ...
@@ -204,7 +204,7 @@ Your first valid message will be the title of the channel!"
 
   msg: (msg) -> # broadcast message
     #todo: add a on message handler
-    msg.type ?= 'text'
+    msg.type ?= ''
     #todo: add msg filter
     # gen a uniq ts
     ts = new Date().getTime()
@@ -223,7 +223,6 @@ Your first valid message will be the title of the channel!"
   system: (client = @clients, msg) ->
     console.log 'system', msg
     client.emit 'system',
-      type: 'gfm'
       data: msg
       ts: new Date().getTime() # cur ts
 

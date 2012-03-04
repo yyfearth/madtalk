@@ -1,6 +1,8 @@
 # imported by views.coffee
 
-import 'lib/showdown.js'
+import 'lib/pagedown.js'
+import 'lib/highlight.pack.js'
+import 'lib/highlight-coffee.js'
 
 class MsgLog extends View
   type: 'msglog'
@@ -42,11 +44,14 @@ class MsgLog extends View
     @
   # end of append
   renderers:
+    default: # http://webreflection.blogspot.com/2012/02/js1k-markdown.html
+      `function(f){/*!(C) WebReflection*/for(var b="</code></pre>",c="blockquote>",e="(?:\\r\\n|\\r|\\n|$)",d="(.+?)"+e,a=[],h=["&(?!#?[a-z0-9]+;)","&amp;","<","&lt;",">","&gt;","^(?:\\t| {4})"+d,function(i,j){return a.push(j+"\n")&&"\0"},"^"+d+"=+"+e,"<h1>$1</h1>\n","^"+d+"-+"+e,"<h2>$1</h2>\n","^(#+)\\s*"+d,function(i,l,k,j){return"<h"+(j=l.length)+">"+k.replace(/#+$/,"")+"</h"+j+">\n"},"(?:\\* \\* |- - |\\*\\*|--)[-*][-* ]*"+e,"<hr/>\n","  +"+e,"<br/>","^ *(\\* |\\+ |- |\\d+. )"+d,function(i,l,k,j){return"<"+(j=/^\d/.test(l)?"ol>":"ul>")+"<li>"+markdown(k)+"</li></"+j},"</(ul|ol)>\\s*<\\1>","","([_*]{1,2})([^\\2]+?)(\\1)",function(i,l,k,j){return"<"+(j=l.length==2?"strong>":"em>")+k+"</"+j},"\\[(.+?)\\]\\((.+?) (\"|')(.+?)(\\3)\\)",'<a href="$2" title="$4">$1</a>',"^&gt; "+d,function(i,j){return"<"+c+markdown(j)+"</"+c},"</"+c+"\\s*<"+c,"","(\x60{1,2})([^\\r\\n]+?)\\1","<code>$2</code>","\\0",function(i){return"<pre><code>"+a.shift()+b},b+"\\s*<pre><code>",""],g=0;g<h.length;){f=f.replace(RegExp(h[g++],"gm"),h[g++])}return f}`
     text: (data) -> @xss.str(data).replace /\n/g, '<br/>'
-    gfm: (sd = new Showdown.converter()).makeHtml.bind sd #! JS 1.8.5
+    md: Markdown.md
+    gfm: Markdown.gfm
   render: ({type, data}) ->
     #throw "unknown type to render #{type}" unless @renderers.hasOwnProperty type
-    type = 'text' unless @renderers.hasOwnProperty type
+    type = 'default' unless @renderers.hasOwnProperty type
     @renderers[type].call @, data
   # end of render
 

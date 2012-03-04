@@ -34,6 +34,7 @@ class StatusBar extends View
 
 class EntryArea extends View
   type: 'entry'
+  mode: type: 'gfm' # default type for now
   constructor: (@cfg) ->
     super @cfg # with auto init
     @history = [] # todo: save history with cur value together
@@ -99,7 +100,7 @@ class EntryArea extends View
   # end of init
   send: ->
     txt = @value
-    channel.msg type: 'gfm', data: txt # todo: type
+    channel.msg type: @mode.type, data: txt # todo: type
     @history.unshift txt if @history[0] isnt txt
     @history.cur = -1
     @value = ''
