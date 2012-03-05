@@ -10,9 +10,25 @@ class StatusBar extends View
     @nick = @query '#user-nick'
     @list = @query '#users-list'
     @conn = @query '#conn-status'
+    # check add permition button
+    @_check()
     @
   _text: (el, txt) ->
     el[if el.innerText? then 'innerText' else 'textContent'] = txt
+  _check: ->
+    return unless (api = window.webkitNotifications)?.checkPermission() > 0
+    li = document.createElement 'li'
+    btn = document.createElement 'input'
+    btn.type = 'button'
+    btn.value = 'Allow Desktop Notifications'
+    btn.onclick = ->
+      api.requestPermission =>
+        @parentNode.removeChild @
+    li.appendChild btn
+    @el.appendChild li
+    console.log 'check', li, @el
+    @
+  # end of check
   update: ->
     return @ unless @init
     # user nick
@@ -75,7 +91,7 @@ class EntryArea extends View
       else if e.keyCode is 13 # new line
         _resize()
       else
-        
+        # todo: delay _resize
       return
     # end of fire_change
     # @on event: 'keydown', handler: _resize
