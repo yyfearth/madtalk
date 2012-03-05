@@ -1411,7 +1411,7 @@ var Markdown = {};
 	var img_white = /^(<img\ssrc="(https?:\/\/|\/)[-A-Za-z0-9+&@#\/%?=~_|!:,.;\(\)]+"(\swidth="\d{1,3}")?(\sheight="\d{1,3}")?(\salt="[^"<>]*")?(\stitle="[^"<>]*")?\s?\/?>)$/i;
 
 	function sanitizeTag(tag) {
-		console.log('a',a_white.test(tag),tag);
+		//console.log('a',a_white.test(tag),tag);
 		if (basic_tag_whitelist.test(tag) || a_white.test(tag) || img_white.test(tag))
 			return tag;
 		else
