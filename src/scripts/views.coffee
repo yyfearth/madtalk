@@ -1,5 +1,5 @@
 
-import 'xss_safe'
+import 'xss'
 
 class View # view controller base class
   constructor: (@cfg) ->
@@ -131,6 +131,7 @@ class AppView extends View
   init: ->
     super()
     @notifier.init()
+    @notifier.onfocus = => @activate yes
     @on event: 'focus', el: window, handler: => @activate on
     @on event: 'blur' , el: window, handler: => @activate off
     # init views
@@ -142,6 +143,9 @@ class AppView extends View
   activate: (active = on) ->
     @active = active # globle lock
     @notifier.active = not @active
+    if active
+      window.focus()
+      @panel.entry.el.focus()
     @
   notify: (msg) ->
     @notifier?.notify msg

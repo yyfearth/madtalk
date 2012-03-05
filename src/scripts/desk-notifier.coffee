@@ -1,12 +1,10 @@
-Notifications = window.webkitNotifications
-
 ###
 The static class controls desktop notification.
 Only supports Chrome and cannot be used on local file system.
 ###
 class DeskNotifier
 	@list: []
-
+	@api: window.webkitNotifications
 	###
 	Ask for desktop notification permission.
 	@para onAnswered:function callback when answered.
@@ -14,10 +12,12 @@ class DeskNotifier
 	@return object this object
 	###
 	@askPermission: (onAnswered) ->
-		return @ if not @isSupported or @isEnabled
+		return @ if @isEnabled
+		console.log 'ask p'
 
-		Notifications.requestPermission ->
-			onAnswered @isEnabled if typeof onAnswered is 'function'
+		@api.requestPermission =>
+			console.log 'ask p', @isEnabled
+			onAnswered? @isEnabled
 			return
 		@
 
@@ -75,7 +75,7 @@ class DeskNotifier
 		timeout = 0 unless timeout? > 0
 		click2Close ?= off
 
-		notification = Notifications.createNotification iconPath, title, content
+		notification = @api.createNotification iconPath, title, content
 		@list.push notification
 
 		notification.addEventListener 'close', (e) ->
@@ -108,11 +108,11 @@ Object.defineProperties DeskNotifier,
 	###
 	@return boolean whether the browser supports the feature
 	###
-	isSupported: get: -> Notifications?
+	isSupported: get: -> @api?
 	###
 	@return boolean whether the browser permits desktop notification
 	###
-	isEnabled: get: -> Notifications? and Notifications.checkPermission() is 0
+	isEnabled: get: -> @api? and @api.checkPermission() is 0
 
 
 ### Unit Test ###

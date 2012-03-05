@@ -68,8 +68,11 @@ class Notifier
       #iconPath: 'https://developer.mozilla.org/favicon.ico'
       title: "Message from #{msg.user?.nick or 'System'}"
       content: if msg.data.length > 200 then msg.data[0..200] + '...' else msg.data
-      timeout: 5000
-      click2Close: -> window.focus()
+      timeout: 15000 # 15s
+      click2Close: => @onfocus?()
+  onfocus: -> # can be override
+    window.focus()
+    @
   notify: (msg) ->
     return @ unless @active
     console.log 'notifier', @active

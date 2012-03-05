@@ -72,8 +72,10 @@ class EntryArea extends View
         _trvl_history e, yes
       else if e.keyCode is 40
         _trvl_history e, no
-      else
+      else if e.keyCode is 13 # new line
         _resize()
+      else
+        
       return
     # end of fire_change
     # @on event: 'keydown', handler: _resize
@@ -95,8 +97,11 @@ class EntryArea extends View
       setTimeout =>
         @el.selectionStart = @el.value.length
       , 0
-    else
-      @resize()
+    else # try
+      _resize()
+      setTimeout ->
+        _resize()
+      , 100
     @
   # end of init
   send: ->
