@@ -128,10 +128,12 @@ Your first valid message will be the title of the channel!"
     # set status
     user.status = 'online'
     user.online = yes
+    console.log 'online', client.user.nick, client.user.online
     # broadcast one user connected
     client.broadcast.emit 'online',
         nick: user.nick
         #id: user.id
+        online: user.online
         status: user.status
         ts: new Date().getTime()
     # end of brodcast
@@ -164,13 +166,14 @@ Your first valid message will be the title of the channel!"
       return
     # user offline
     client.on 'disconnect', ->
-      console.log 'disconnect', client.user
+      console.log 'offline', client.user.nick, client.user.online
       return unless user.online
       user.status = 'offline'
       user.online = no
       client.broadcast.emit 'offline',
         nick: user.nick
         #id: user.id
+        online: user.online
         status: user.status
         ts: new Date().getTime()
       return

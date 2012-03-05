@@ -203,7 +203,6 @@ class Channel
     return @ if false is @listeners["beforeuser#{status}"]? user # call before event listeners
     @users.push @users.index[user.nick] = user unless @users.index[user.nick]?
     @users.index[user.nick].status = user.status
-    @listeners["afteruser#{status}"]? user # call before event listeners
     return
   onuserleave: (user) ->
     return unless @logined
