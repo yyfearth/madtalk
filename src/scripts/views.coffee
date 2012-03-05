@@ -104,6 +104,10 @@ class View # view controller base class
     els.forEach (el) -> el.dispatchEvent e # return
     @
   # end of fire
+
+### notifier ###
+import 'notifier'
+
 ### import views ###
 import 'login'
 import 'msglog'
@@ -112,8 +116,40 @@ import 'panel'
 ### chat ###
 # need import msglog, panel
 
+class AppView extends View
+  type: 'app'
+  constructor: (@cfg) ->
+    super @cfg # with auto init
+    @login = Login.create el: '#login'
+    @msglog = MsgLog.create el: '#msglog'
+    @panel = Panel.create el: '#panel', msglog: @msglog
+    throw 'Notifier is not ready' unless Notifier?.audios?
+    @notifier = new Notifier
+  ### static ###
+  @create: (cfg) -> super @, cfg
+  ### public ###
+  init: ->
+    super()
+    @notifier.init()
+    @on event: 'focus', el: window, handler: => @activate on
+    @on event: 'blur' , el: window, handler: => @activate off
+    # init views
+    @login.init()
+    @msglog.init()
+    @panel.init()
+    @activate on # default on
+    @
+  activate: (active = on) ->
+    @active = active # globle lock
+    @notifier.active = not @active
+    @
+  notify: (msg) ->
+    @notifier?.notify msg
+    @
+
 ### factory ###
 _views =
+  app: AppView
   login: Login
   msglog: MsgLog
   panel: Panel

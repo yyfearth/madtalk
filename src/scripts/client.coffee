@@ -12,16 +12,18 @@ import 'channel'
 import 'views'
 
 id = location.pathname
-window.channel = View.channel = channel = Channel.create {id, io}
+View.channel = channel = Channel.create {id, io}
+window.app = app = AppView.create el: '#app'
+app.channel = channel
 
-login = Login.create el: '#login'
-msglog = MsgLog.create el: '#msglog'
-panel = Panel.create { el: '#panel', msglog }
+# login = Login.create el: '#login'
+# msglog = MsgLog.create el: '#msglog'
+# panel = Panel.create { el: '#panel', msglog }
 
 listeners = 
   logined: ->
     document.querySelector('#chat').hidden = false # todo: deal with this!
-    panel.status.update().online on
+    app.panel.status.update().online on
     return
 
   # loginfailed: (err) ->
@@ -30,7 +32,7 @@ listeners =
 
   aftersync: ->
     # todo: smarter filtering
-    msglog.append channel.records
+    app.msglog.append channel.records
     
     if channel.title
       document.title = "Channel #{channel.title} - MadTalk"
@@ -38,40 +40,42 @@ listeners =
       document.title = "A New Channel #{channel.id[1..]} - MadTalk"
     # doto: show title and creator in header
    
-    panel.status.update()
+    app.panel.status.update()
     return
 
   disconnected: ->
-    msglog.append
+    app.msglog.append
       data: "You are offline now."
       class: 'offline'
-    panel.status.online off
+    app.panel.status.online off
     return
   aftermessage: (msg) ->
-    msglog.append msg
+    app.msglog.append msg
+    app.notify msg
   aftersystem: (msg) ->
     msg.class = 'system'
-    msglog.append msg
+    app.msglog.append msg
   afteruseronline: (user) ->
-    msglog.append
+    app.msglog.append
       data: "User #{user.nick} is online now."
       class: 'offline'
       ts: user.ts
-    panel.status.update()
+    app.panel.status.update()
   afteruseroffline: (user) ->
-    msglog.append
+    app.msglog.append
       data: "User #{user.nick} is offline now."
       class: 'offline'
       ts: user.ts
-    panel.status.update()
+    app.panel.status.update()
   # afterleave: ->
     #todo: leave and logout
 
   connected: -> #$ -> # dom ready
     # EP
-    login.init()
-    msglog.init()
-    panel.init()
+    app.init()
+    # login.init()
+    # msglog.init()
+    # panel.init()
 
     return
 

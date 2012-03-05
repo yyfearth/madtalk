@@ -88,6 +88,7 @@ class EntryArea extends View
     @on el: window, event: 'unload', handler: =>
         sessionStorage.auto_save = @value or ''
         return
+    @on el: window, event: 'resize', handler: => @resize()
     # restore save # todo: use localstorage with sid
     @value = auto_save = sessionStorage.auto_save or ''
     if auto_save
