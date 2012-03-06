@@ -1,7 +1,6 @@
 ###
 MadTalk
 client scripts
-include jquery socket.io showdown
 ###
 
 # madtalk client.coffee
@@ -15,10 +14,6 @@ id = location.pathname
 View.channel = channel = Channel.create {id, io}
 window.app = app = AppView.create el: '#app'
 app.channel = channel
-
-# login = Login.create el: '#login'
-# msglog = MsgLog.create el: '#msglog'
-# panel = Panel.create { el: '#panel', msglog }
 
 listeners = 
   logined: ->
@@ -73,10 +68,6 @@ listeners =
   connected: -> #$ -> # dom ready
     # EP
     app.init()
-    # login.init()
-    # msglog.init()
-    # panel.init()
-
     return
 
 channel.listeners[k] = v for k, v of listeners

@@ -2,6 +2,7 @@
 import 'xss'
 
 class View # view controller base class
+  # type: 'view' the name of view, subclass must have this
   constructor: (@cfg) ->
     # PLEASE USE View.create 'view', cfg instead of new
     throw 'bad cfg' unless @cfg? and @cfg.channel and @cfg.el
@@ -24,17 +25,19 @@ class View # view controller base class
       inited: get: -> _el? and @init isnt _init # has el and @init isnt org
       hidden:
         get: -> _el.hidden
-        set: (value) -> _el.hidden = Boolean value
+        set: (value) ->
+          _el.hidden = Boolean value
+          _el.style.display = if value then 'block' else 'none'
+          return
     console.log 'constructor view'
 
     # auto init
     @init() if @cfg.auto
   ### static ###
-  # @view: 'view' the name of view, subclass must have this
   # @create: moved to the end of file
-  xss: xss_safe # util
-  listeners: {}
   ### public ###
+  xss: xss_safe # util
+  listeners: {} # unused yet
   init: ->
     unless @inited # to ensure run only once
       console.log 'init', @type # only once
@@ -116,40 +119,7 @@ import 'panel'
 ### chat ###
 # need import msglog, panel
 
-class AppView extends View
-  type: 'app'
-  constructor: (@cfg) ->
-    super @cfg # with auto init
-    @login = Login.create el: '#login'
-    @msglog = MsgLog.create el: '#msglog'
-    @panel = Panel.create el: '#panel', msglog: @msglog
-    throw 'Notifier is not ready' unless Notifier?.audios?
-    @notifier = new Notifier
-  ### static ###
-  @create: (cfg) -> super @, cfg
-  ### public ###
-  init: ->
-    super()
-    @notifier.init()
-    @notifier.onfocus = => @activate yes
-    @on event: 'focus', el: window, handler: => @activate on
-    @on event: 'blur' , el: window, handler: => @activate off
-    # init views
-    @login.init()
-    @msglog.init()
-    @panel.init()
-    @activate on # default on
-    @
-  activate: (active = on) ->
-    @active = active # globle lock
-    @notifier.active = not @active
-    if active
-      window.focus()
-      @panel.entry.el.focus()
-    @
-  notify: (msg) ->
-    @notifier?.notify msg
-    @
+import 'appview'
 
 ### factory ###
 _views =
