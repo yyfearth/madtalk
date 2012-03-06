@@ -949,6 +949,25 @@ var Markdown = {};
 				}
 			);
 
+			// add by Wilson
+			if (opt.code_lang) text = text.replace(/(`{3})(\w*?)\n((?:.+?\n)+?)\1(?!`)/g,
+				function (wholeMatch, m1, m2, m3) {
+					var cls = m2, codeblock = m3;
+					// console.log('test', wholeMatch, cls, codeblock);
+
+					codeblock = _EncodeCode(codeblock);
+					codeblock = _Detab(codeblock);
+					codeblock = codeblock.replace(/^\n+/g, ""); // trim leading newlines
+					codeblock = codeblock.replace(/\n+$/g, ""); // trim trailing whitespace
+
+					cls = cls ? ' class="' + cls +'"' : ''
+
+					codeblock = "<pre><code" + cls + ">" + codeblock + "</code></pre>";
+					// console.log(codeblock);
+					return "\n\n" + codeblock + "\n\n";
+				}
+			);
+
 			// attacklab: strip sentinel
 			text = text.replace(/~0/, "");
 
@@ -1007,13 +1026,14 @@ var Markdown = {};
 					c = _EncodeCode(c);
 					c = c.replace(/:\/\//g, "~P"); // to prevent auto-linking. Not necessary in code *blocks*, but in code spans. Will be converted back after the auto-linker runs.
 					// if (opt.code_lang && /\n/.test(text) && m2 == '```') { // add by Wilson
-						// mt = wholeMatch.match(/^```(\w{2,15})?\n/);
-						// cls = ''
-						// if (mt && mt[1]) {
-							// cls = ' class="' + mt[1] + '"';
-							// c = c.slice(mt[1].length + 1);
-						// }
-						// return m1 + "<pre><code" + cls + ">" + c + "</code></pre>";
+					// 	mt = wholeMatch.match(/^```(\w{2,15})?\n/);
+					// 	cls = ''
+					// 	if (mt && mt[1]) {
+					// 		cls = ' class="' + mt[1] + '"';
+					// 		// c = c.slice(mt[1].length + 1);
+					// 	}
+					// 	console.log('test', cls);
+					// 	return m1 + "<pre><code" + cls + ">" + c + "</code></pre>";
 					// }
 					return m1 + "<code>" + c + "</code>";
 				}
@@ -1410,9 +1430,13 @@ var Markdown = {};
 	// <img src="url..." optional width  optional height  optional alt  optional title
 	var img_white = /^(<img\ssrc="(https?:\/\/|\/)[-A-Za-z0-9+&@#\/%?=~_|!:,.;\(\)]+"(\swidth="\d{1,3}")?(\sheight="\d{1,3}")?(\salt="[^"<>]*")?(\stitle="[^"<>]*")?\s?\/?>)$/i;
 
+	// add by Wilson
+	var code_white = /^(<code class="\w+">)$/i;
+
 	function sanitizeTag(tag) {
 		//console.log('a',a_white.test(tag),tag);
-		if (basic_tag_whitelist.test(tag) || a_white.test(tag) || img_white.test(tag))
+		if (basic_tag_whitelist.test(tag) || a_white.test(tag)
+		 || img_white.test(tag) || code_white.test(tag))
 			return tag;
 		else
 			return "";
@@ -1492,7 +1516,7 @@ var Markdown = {};
 
 	// add by Wilson
 	pagedown = Markdown.getSanitizingConverter(); // new Markdown.Converter();
-	gfm = new Converter({soft_break:true}); //,code_lang:true
+	gfm = new Converter({soft_break:true,code_lang:true}); //
 	gfm.hooks.chain("postConversion", sanitizeHtml);
 	gfm.hooks.chain("postConversion", balanceTags);
 	gfm.hooks.chain("preConversion", function (text) {

@@ -2,7 +2,7 @@
 
 import 'lib/pagedown.js'
 import 'lib/highlight.pack.js'
-import 'lib/highlight-coffee.js'
+# import 'lib/highlight-coffee.js'
 
 class MsgLog extends View
   type: 'msglog'
@@ -15,6 +15,7 @@ class MsgLog extends View
   init: ->
     super()
     @clear()
+    hljs.initHighlighting()
     #Object.defineProperties @, # el shotcuts
   # end of init
   clear: ->
@@ -40,6 +41,11 @@ class MsgLog extends View
       msg.rendered = msg.ts
       return
     @el.appendChild fragment
+    codes = [].slice.call @el.querySelectorAll 'code'
+    # console.log 'hi', codes, hljs
+    codes.forEach (code) ->
+      # hljs.tabReplace = '<span class="indent">\t</span>'
+      hljs.highlightBlock code, null, (code.parentNode.tagName isnt 'PRE')
     @scroll no
     @
   # end of append

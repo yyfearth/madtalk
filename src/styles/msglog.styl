@@ -24,6 +24,7 @@
       opacity 0.99
       background-color lighten($bkg-color, 10%)
     > .info
+      position absolute
       font-size 14px
       line-height 16px
       display inline-block
@@ -42,6 +43,7 @@
         min-height 0.5em
     > .data
       margin 1px
+      margin-left 6em
       padding 0.1em 0.5em
       display inline-block
       text-align left
@@ -55,6 +57,8 @@
         margin-top 0.3em
       *:last-child
         margin-bottom 0.3em
+      code
+        border-radius 0.25em
     // data color
     &.message > .data
       color #fff

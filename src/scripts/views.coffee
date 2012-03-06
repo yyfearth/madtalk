@@ -27,9 +27,9 @@ class View # view controller base class
         get: -> _el.hidden
         set: (value) ->
           _el.hidden = Boolean value
-          _el.style.display = if value then 'block' else 'none'
+          _el.style.display = if value then 'none' else 'block'
           return
-    console.log 'constructor view'
+    # console.log 'constructor view'
 
     # auto init
     @init() if @cfg.auto
