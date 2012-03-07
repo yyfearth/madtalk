@@ -69,7 +69,7 @@ class EntryArea extends View
       _resize()
       setTimeout ->
         _resize()
-      , 100
+      , 300
     @
   # end of init
   send: ->
@@ -78,6 +78,7 @@ class EntryArea extends View
     @history.unshift txt if @history[0] isnt txt
     @history.cur = -1
     @value = ''
+    @resize()
     @
   # end of send
   resize: ->
@@ -93,6 +94,7 @@ class EntryArea extends View
         panel_resize()
       , 0
     else
+      @el.style.height = 'auto'
       panel_resize()
     @
 # end of class

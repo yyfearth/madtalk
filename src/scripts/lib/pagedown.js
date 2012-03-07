@@ -950,7 +950,7 @@ var Markdown = {};
 			);
 
 			// add by Wilson
-			if (opt.code_lang) text = text.replace(/(`{3})(\w*?)\n((?:.+?\n)+?)\1(?!`)/g,
+			if (opt.code_lang) text = text.replace(/(`{3})(\w*?)\n((?:.*?\n)+?)\1(?!`)/g,
 				function (wholeMatch, m1, m2, m3) {
 					var cls = m2, codeblock = m3;
 					// console.log('test', wholeMatch, cls, codeblock);
