@@ -64,22 +64,23 @@ class Channel
         client.user = user
         try
           @validate client, (user) =>
+            # bind event handlers
+            @handle client
+            # send login callback
+            callback? user
+            # push sync req
+            @sync client
             # the 1st logined user is the creator
             unless @creator?
               user.creator = yes
               @creator = user
               console.log 'the creator', user.nick
+              # send msg after login callback
               @system client, "Welcome #{user.nick}! 
 You are the creator of this channel. 
 Your first valid message will be the title of the channel!"
             else if user.creator? and user isnt @creator 
               delete user.creator
-            # bind event handlers
-            @handle client
-            # send login callback
-            callback? user
-            # push sync
-            @sync client
         catch err
           console.error err
           callback? err: err

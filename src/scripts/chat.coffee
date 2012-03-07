@@ -4,6 +4,7 @@ import 'lib/pagedown.js'
 import 'lib/highlight.pack.js'
 # import 'lib/highlight-coffee.js' # err
 import 'notifier'
+# sub views
 import 'msglog'
 import 'panel'
 

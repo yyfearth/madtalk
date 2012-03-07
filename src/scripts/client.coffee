@@ -3,12 +3,10 @@ MadTalk
 client scripts
 ###
 
-# madtalk client.coffee
-
-# import modules
+# import client modules
 import 'polyfills'
 import 'channel'
-import 'views'
+import 'appview'
 
 id = location.pathname
 View.channel = channel = Channel.create {id, io}
@@ -17,14 +15,14 @@ app.channel = channel
 
 listeners = 
   aftersync: ->
-    # todo: smarter filtering
+    # filtered while appending
     app.chat.msglog.append channel.records
     
     if channel.title
       document.title = "Channel #{channel.title} - MadTalk"
     else
       document.title = "A New Channel #{channel.id[1..]} - MadTalk"
-    # doto: show title and creator in header
+    # doto: show title and creator in header?
    
     app.chat.panel.status.update()
     return
@@ -35,12 +33,14 @@ listeners =
       class: 'offline'
     app.chat.panel.status.online off
     return
+
   aftermessage: (msg) ->
     app.chat.msglog.append msg
     app.chat.notify msg
   aftersystem: (msg) ->
     msg.class = 'system'
     app.chat.msglog.append msg
+
   afteruseronline: (user) ->
     app.chat.msglog.append
       data: "User #{user.nick} is online now."
@@ -61,19 +61,13 @@ channel.listeners.connected = -> #$ -> # dom ready
     app.init()
 
     channel.listeners.logined = ->
-      # document.querySelector('#chat').hidden = false # todo: deal with this!
-      
       app.chat.init().show()
       app.chat.panel.status.update().online on
-
+      # listen to msg after login
       channel.listeners[k] = v for k, v of listeners
-
       return
+
     # channel.listeners.loginfailed = (err) ->
-      # sessionStorage.user = null
-      # alert 'login failed!\n' + err
+      # alerts already handled by login
 
     return
-
-
-#$.extend channel.listeners, listeners

@@ -1,5 +1,8 @@
 # imported by views.coffee
 
+# base view class
+import 'view'
+# sub views
 import 'login'
 import 'chat'
 

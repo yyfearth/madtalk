@@ -32,7 +32,19 @@ app.configure ->
   app.set 'view engine', 'coffee'
   app.register '.coffee', require('coffeekup').adapters.express
 
+chk_ua = (req, res) ->
+  ua = req.headers['user-agent']
+  if /MSIE [1-9]\./i.test ua
+    res.end 'This WebApp does not support IE below 10!'
+    false
+  else if /opera/i.test ua
+    res.end 'This WebApp does not support Opera!'
+    false
+  else
+    true
+
 app.get '/', (req, res) ->
+  return unless chk_ua req, res
   console.log 'A client has requested this route.'
   id = new Date().getTime().toString 36
   id++ while Channel.has id
@@ -56,6 +68,7 @@ app.get /^\/.+?\/$/, (req, res) -> # /id/ -> /id
   res.redirect req.url[0...-1], 301
 
 app.get Channel.ID_REGEX, (req, res) -> # '.' is not allowed
+  return unless chk_ua req, res
   # create channel
   id = req.url
   Channel.create {id, io} unless Channel.has id

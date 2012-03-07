@@ -1,4 +1,6 @@
+# imported by chat view
 
+# sub views
 import 'statusbar'
 import 'entryarea'
 

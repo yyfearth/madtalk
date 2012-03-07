@@ -1,3 +1,4 @@
+# imported by app view
 
 import 'xss'
 
@@ -130,6 +131,3 @@ class View # view controller base class
     els.forEach (el) -> el.dispatchEvent e # return
     @
   # end of fire
-
-### import views ###
-import 'appview'
