@@ -54,3 +54,5 @@ class StatusBar extends View
     @_text @conn, if online then 'online' else 'offline'
     @
 # end of class
+
+View.reg StatusBar # reg

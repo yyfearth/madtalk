@@ -1,14 +1,17 @@
 # imported by views.coffee
 
-import 'lib/pagedown.js'
-import 'lib/highlight.pack.js'
-# import 'lib/highlight-coffee.js'
-
 class MsgLog extends View
   type: 'msglog'
   constructor: (@cfg) ->
     super @cfg # with auto init
-
+    ### public ###
+    Object.defineProperties @,
+      bottom:
+        get: -> parseFloat @el.style.bottom
+        set: (value) ->
+          value += 'px' if (typeof value is 'number') or /$[\d\.]+$/.test value
+          @el.style.bottom = value
+          return
   ### static ###
   @create: (cfg) -> super @, cfg
   ### public ###
@@ -70,3 +73,6 @@ class MsgLog extends View
       setTimeout =>
         @scroll yes
       , 0
+# end of class
+
+View.reg MsgLog # reg

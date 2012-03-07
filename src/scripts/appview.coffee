@@ -1,36 +1,22 @@
 # imported by views.coffee
 
+import 'login'
+import 'chat'
+
 class AppView extends View
   type: 'app'
   constructor: (@cfg) ->
     super @cfg # with auto init
     @login = Login.create el: '#login'
-    @msglog = MsgLog.create el: '#msglog'
-    @panel = Panel.create el: '#panel', msglog: @msglog
-    throw 'Notifier is not ready' unless Notifier?.audios?
-    @notifier = new Notifier
+    @chat = Chat.create el: '#chat'
   ### static ###
   @create: (cfg) -> super @, cfg
   ### public ###
   init: ->
     super()
-    @notifier.init() # todo: init after login, move to chat view
-    @notifier.onfocus = => @activate yes
-    @on event: 'focus', el: window, handler: => @activate on
-    @on event: 'blur' , el: window, handler: => @activate off
     # init views
     @login.init()
-    @msglog.init()
-    @panel.init()
-    @activate on # default on
+    # @chat.init()
     @
-  activate: (active = on) ->
-    @active = active # globle lock
-    @notifier.active = not @active
-    if active
-      window.focus()
-      @panel.entry.el.focus()
-    @
-  notify: (msg) ->
-    @notifier?.notify msg
-    @
+
+View.reg AppView # reg

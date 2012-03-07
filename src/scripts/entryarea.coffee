@@ -98,3 +98,5 @@ class EntryArea extends View
       panel_resize()
     @
 # end of class
+
+View.reg EntryArea # reg

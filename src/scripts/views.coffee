@@ -34,7 +34,30 @@ class View # view controller base class
     # auto init
     @init() if @cfg.auto
   ### static ###
-  # @create: moved to the end of file
+  ###
+  @param type {string} view class type e.g. 'login', 'msglog'
+  @param cfg {object} config must have el and channel
+  ###
+  @create: (type, cfg = {}) ->
+    throw 'need view class' unless type
+    cfg = el: cfg if typeof cfg is 'string'
+    #type = type::type if type::type # if type is a view
+    type = View._views[type.toLowerCase()] if typeof type is 'string'
+    unless typeof type is 'function' and View._views.hasOwnProperty type::type
+      throw "unknown view class #{type}"
+    view = type
+    type = view::type
+    cfg.el ?= '#' + type # default el
+    cfg.channel ?= View.channel or throw 'cannot create a view without channel'
+    cfg.channel.views ?= {}
+    console.log 'create', type
+    cfg.channel.views[type] = new view cfg # return
+  # end of create
+  @_views: {} # reg subclasses
+  @reg: (sub) ->
+    throw 'sub class sould be a view class' unless (typeof sub is 'function') and sub::type
+    @_views[sub::type] = sub
+    @
   ### public ###
   xss: xss_safe # util
   listeners: {} # unused yet
@@ -108,44 +131,5 @@ class View # view controller base class
     @
   # end of fire
 
-### notifier ###
-import 'notifier'
-
 ### import views ###
-import 'login'
-import 'msglog'
-import 'panel'
-
-### chat ###
-# need import msglog, panel
-
 import 'appview'
-
-### factory ###
-_views =
-  app: AppView
-  login: Login
-  msglog: MsgLog
-  panel: Panel
-  status: StatusBar
-  entry: EntryArea
-
-###
-@param type {string} view class type e.g. 'login', 'msglog'
-@param cfg {object} config must have el and channel
-###
-View.create = (type, cfg = {}) ->
-  throw 'need view class' unless type
-  cfg = el: cfg if typeof cfg is 'string'
-  #type = type::type if type::type # if type is a view
-  type = _views[type.toLowerCase()] if typeof type is 'string'
-  unless typeof type is 'function' and _views.hasOwnProperty type::type
-    throw "unknown view class #{type}"
-  view = type
-  type = view::type
-  cfg.el ?= '#' + type # default el
-  cfg.channel ?= View.channel or throw 'cannot create a view without channel'
-  cfg.channel.views ?= {}
-  console.log 'create', type
-  cfg.channel.views[type] = new view cfg # return
-# end of create

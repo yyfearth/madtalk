@@ -43,3 +43,5 @@ class Login extends View
       return
     @
   # end of login
+
+View.reg Login # reg

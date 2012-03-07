@@ -5,10 +5,8 @@ import 'entryarea'
 class Panel extends View
   type: 'panel'
   constructor: (@cfg = {}) ->
-    throw 'need msglog view' unless @cfg.msglog?._is_view
     super @cfg # with auto init
     ### private ###
-    _msglog = @cfg.msglog #ref
     _get_view = (type, el) =>
       el ?= '#' + type
       return el if el._is_view
@@ -18,7 +16,6 @@ class Panel extends View
     _entry  = _get_view 'entry', @cfg.entry
     ### public ###
     Object.defineProperties @,
-      msglog: value: _msglog
       status: value: _status
       entry: value: _entry
 
@@ -26,7 +23,8 @@ class Panel extends View
   @create: (cfg) -> super @, cfg
   ### internal ###
   _resize: -> # call by entry, after entry has been resized
-    @msglog.el.style.bottom = @height + 'px' # log resize
+    @parent?._resize?() # pass to chat
+    return
   ### public ###
   init: ->
     @status.init() unless @status.inited
@@ -35,3 +33,5 @@ class Panel extends View
 
     @
   # end of init
+
+View.reg Panel # reg

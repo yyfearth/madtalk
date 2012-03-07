@@ -16,18 +16,9 @@ window.app = app = AppView.create el: '#app'
 app.channel = channel
 
 listeners = 
-  logined: ->
-    document.querySelector('#chat').hidden = false # todo: deal with this!
-    app.panel.status.update().online on
-    return
-
-  # loginfailed: (err) ->
-    # sessionStorage.user = null
-    # alert 'login failed!\n' + err
-
   aftersync: ->
     # todo: smarter filtering
-    app.msglog.append channel.records
+    app.chat.msglog.append channel.records
     
     if channel.title
       document.title = "Channel #{channel.title} - MadTalk"
@@ -35,41 +26,54 @@ listeners =
       document.title = "A New Channel #{channel.id[1..]} - MadTalk"
     # doto: show title and creator in header
    
-    app.panel.status.update()
+    app.chat.panel.status.update()
     return
 
   disconnected: ->
-    app.msglog.append
+    app.chat.msglog.append
       data: "You are offline now."
       class: 'offline'
-    app.panel.status.online off
+    app.chat.panel.status.online off
     return
   aftermessage: (msg) ->
-    app.msglog.append msg
-    app.notify msg
+    app.chat.msglog.append msg
+    app.chat.notify msg
   aftersystem: (msg) ->
     msg.class = 'system'
-    app.msglog.append msg
+    app.chat.msglog.append msg
   afteruseronline: (user) ->
-    app.msglog.append
+    app.chat.msglog.append
       data: "User #{user.nick} is online now."
       class: 'offline'
       ts: user.ts
-    app.panel.status.update()
+    app.chat.panel.status.update()
   afteruseroffline: (user) ->
-    app.msglog.append
+    app.chat.msglog.append
       data: "User #{user.nick} is offline now."
       class: 'offline'
       ts: user.ts
-    app.panel.status.update()
+    app.chat.panel.status.update()
   # afterleave: ->
     #todo: leave and logout
 
-  connected: -> #$ -> # dom ready
+channel.listeners.connected = -> #$ -> # dom ready
     # EP
     app.init()
+
+    channel.listeners.logined = ->
+      # document.querySelector('#chat').hidden = false # todo: deal with this!
+      
+      app.chat.init().show()
+      app.chat.panel.status.update().online on
+
+      channel.listeners[k] = v for k, v of listeners
+
+      return
+    # channel.listeners.loginfailed = (err) ->
+      # sessionStorage.user = null
+      # alert 'login failed!\n' + err
+
     return
 
-channel.listeners[k] = v for k, v of listeners
 
 #$.extend channel.listeners, listeners
