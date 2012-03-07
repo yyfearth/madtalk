@@ -40,6 +40,9 @@ chk_ua = (req, res) ->
   else if /opera/i.test ua
     res.end 'This WebApp does not support Opera!'
     false
+  else if /Mozilla\/4/i.test ua
+    res.end 'This WebApp does not support your browser! \nIt seems your browser is out of date.'
+    false
   else
     true
 
