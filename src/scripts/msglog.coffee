@@ -32,7 +32,7 @@ class MsgLog extends View
       li.className = 'log ' + (msg.class or 'message') # default is message
       li.className += ' ' + msg.type if msg.type
       nick = if msg.user?.nick then @xss.str msg.user.nick else ''
-      ts = new Date(msg.ts or new Date).toLocaleTimeString()
+      ts = new Date(msg.ts or new Date).getShortTimeString no
       li.innerHTML = "<div class=\"info\">
         <label class=\"nick\">#{nick}</label>
         <label class=\"ts\">#{ts}</label></div>

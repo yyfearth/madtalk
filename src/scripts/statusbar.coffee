@@ -12,6 +12,11 @@ class StatusBar extends View
     @nick = @query '#user-nick'
     @list = @query '#users-list'
     @conn = @query '#conn-status'
+    @mode = @query '#msg-mode'
+    @type = @query '#msg-type'
+    # todo: cmd mode and trigger modes
+    @_text @mode, 'markdown'
+    @_text @type, 'gfm'
     # check add permition button
     @_check()
     @

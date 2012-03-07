@@ -17,6 +17,17 @@ unless Function::bind?
   
     fBound;  
 
+Date::getShortTimeString = (h24 = yes) ->
+  h = @getHours()
+  ampm = if h24 then '' else (if h < 12 then ' AM' else ' PM')
+  h = h % 12 unless h24
+  h = (if h > 9 then '' else '0') + h
+  m = @getMinutes()
+  m = (if m > 9 then '' else '0') + m
+  s = @getSeconds()
+  s = (if s > 9 then '' else '0') + s
+  "#{h}:#{m}:#{s}#{ampm}"
+
 ###
 Returns a description of this past date in relative terms.
 Takes an optional parameter (default: 0) setting the threshold in ms which

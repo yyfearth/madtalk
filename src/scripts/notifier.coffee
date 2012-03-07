@@ -51,7 +51,7 @@ class Notifier
     @
   activate: (active = yes) ->
     if active
-      @_title = document.title
+      @_title = document.title or @title or 'MadTalk'
     else
       document.title = @_title
       @queue = []
