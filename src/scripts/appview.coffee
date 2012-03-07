@@ -14,7 +14,7 @@ class AppView extends View
   ### public ###
   init: ->
     super()
-    @notifier.init()
+    @notifier.init() # todo: init after login, move to chat view
     @notifier.onfocus = => @activate yes
     @on event: 'focus', el: window, handler: => @activate on
     @on event: 'blur' , el: window, handler: => @activate off

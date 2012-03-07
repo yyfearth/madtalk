@@ -17,16 +17,16 @@ unless Function::bind?
   
     fBound;  
 
-Date::getShortTimeString = (h24 = yes) ->
+Date::getShortTimeString = (h12 = no) ->
   h = @getHours()
-  ampm = if h24 then '' else (if h < 12 then ' AM' else ' PM')
-  h = h % 12 unless h24
+  h12 = if h12 then (if h < 12 then ' AM' else ' PM') else ''
+  h -= 12 if h12 and h > 12
   h = (if h > 9 then '' else '0') + h
   m = @getMinutes()
   m = (if m > 9 then '' else '0') + m
   s = @getSeconds()
   s = (if s > 9 then '' else '0') + s
-  "#{h}:#{m}:#{s}#{ampm}"
+  "#{h}:#{m}:#{s}#{h12}"
 
 ###
 Returns a description of this past date in relative terms.
