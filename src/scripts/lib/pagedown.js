@@ -1428,7 +1428,7 @@ var Markdown = {};
 	var a_white = /^(<a\shref="((https?|ftp):\/\/|mailto:|\/)[-A-Za-z0-9+&@#\/%?=~_|!:,.;\(\)]+"(\stitle="[^"<>]+")?\s?>|<\/a>)$/i;
 
 	// <img src="url..." optional width  optional height  optional alt  optional title
-	var img_white = /^(<img\ssrc="(https?:\/\/|\/)[-A-Za-z0-9+&@#\/%?=~_|!:,.;\(\)]+"(\swidth="\d{1,3}")?(\sheight="\d{1,3}")?(\salt="[^"<>]*")?(\stitle="[^"<>]*")?\s?\/?>)$/i;
+	var img_white = /^(<img\ssrc="(https?:\/\/|data:image\/(?:png|gif|p?jpeg|bmp);base64,|\/)[-A-Za-z0-9+&@#\/%?=~_|!:,.;\(\)]+"(\swidth="\d{1,3}")?(\sheight="\d{1,3}")?(\salt="[^"<>]*")?(\stitle="[^"<>]*")?\s?\/?>)$/i;
 
 	// add by Wilson
 	var code_white = /^(<code class="\w+">)$/i;
