@@ -1,6 +1,6 @@
 # imported by appview.coffee
 # markdown and highlight for msglog and panel
-import 'lib/pagedown.js'
+import 'lib/pagedown.mod.js'
 import 'lib/highlight.pack.js'
 # import 'lib/highlight-coffee.js' # err
 import 'notifier'

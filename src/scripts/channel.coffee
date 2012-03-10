@@ -1,6 +1,7 @@
 ###
 * client side Channel class
 ###
+import 'lib/socket.io+websocket.js'
 
 class Channel
   #! please use Channel.create instead of new Channel
@@ -214,6 +215,8 @@ class Channel
       delete @users.index[u.nick]
       @listeners.afteruserleave? u # call before event listeners
     return
+
+  # todo: reconnect / reconnect_failed event
 
   # event listeners
   listeners: # listenerss fired before event return false to cancel

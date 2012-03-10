@@ -26,5 +26,5 @@ html ->
       # p -> a href: '/privacy', -> 'Privacy Policy'
     
     if @dev
-      script src: '/socket.io/socket.io+websocket.js'
+      # script src: '/socket.io/socket.io+websocket.js'
       script @js # client.js
