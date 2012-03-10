@@ -2,7 +2,6 @@
 # markdown and highlight for msglog and panel
 import 'lib/pagedown.mod.js'
 import 'lib/highlight.pack.js'
-# import 'lib/highlight-coffee.js' # err
 import 'notifier'
 # sub views
 import 'msglog'
