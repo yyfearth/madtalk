@@ -16,6 +16,40 @@ class EntryArea extends View
           @fire event: 'change' # return
   ### static ###
   @create: (cfg) -> super @, cfg
+  ### private ###
+  _onpaste: (e) -> # paste images
+    items = [].slice.call e.clipboardData.items
+    # console.log JSON.stringify items # will give you the mime types
+    blob = null
+    for item in items
+      if item.kind is 'file' and /image\/(?:png|jpeg|qjpeg|gif|bmp)/.test item.type
+        blob = item.getAsFile()
+        @_insertImage blob if blob
+        return
+    return
+  _insertImage: (blob) ->
+    if blob.size > 512 * 1024 # 512 K
+      @channel.system 'The image you pasted is too large.' 
+      return
+    reader = new FileReader
+    reader.onload = (e) =>
+      dataurl = e.target.result
+      @_insertText "<img src=\"#{dataurl}\"/>" # todo: match mode
+      return
+    reader.readAsDataURL blob
+    return false
+  _insertText: (data = '') ->
+    data = data.toString()
+    if data.length + @value.length > 10000 # maxlength
+      @channel.system 'The content exceed the max length.' 
+      return
+    s = @el.selectionStart
+    e = @el.selectionEnd
+    arr = @value.split ''
+    # console.log 'insert', s, e, arr, data
+    arr.splice s, s - e, data
+    # console.log 'inserted', narr
+    @el.value = arr.join ''
   ### public ###
   init: ->
     super()
@@ -54,6 +88,8 @@ class EntryArea extends View
     # placeholder
     @on event: 'focus', handler: -> @placeholder = ''
     @on event: 'blur', handler: -> @placeholder = '_'
+    # paste image
+    @el.onpaste = (e) => @_onpaste e
     # auto save on exit
     @on el: window, event: 'unload', handler: =>
         sessionStorage.auto_save = @value or ''
@@ -72,6 +108,7 @@ class EntryArea extends View
       , 300
     @
   # end of init
+  ### public ###
   send: ->
     txt = @value
     channel.msg type: @mode.type, data: txt # todo: type
