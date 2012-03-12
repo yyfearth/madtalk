@@ -40,7 +40,8 @@ class EntryArea extends View
     return false
   _insertText: (data = '') ->
     data = data.toString()
-    if data.length + @value.length > 10000 # maxlength
+    if data.length + @el.value.length > @el.maxLength # maxlength
+      console.log 'length', data.length, @el.value.length, @el.maxLength
       @channel.system 'The content exceed the max length.' 
       return
     s = @el.selectionStart
@@ -49,7 +50,7 @@ class EntryArea extends View
     # console.log 'insert', s, e, arr, data
     arr.splice s, s - e, data
     # console.log 'inserted', narr
-    @el.value = arr.join ''
+    @value = arr.join ''
   ### public ###
   init: ->
     super()
@@ -89,7 +90,7 @@ class EntryArea extends View
     @on event: 'focus', handler: -> @placeholder = ''
     @on event: 'blur', handler: -> @placeholder = '_'
     # paste image
-    @el.onpaste = (e) => @_onpaste e
+    @on event: 'paste', handler: (e) => @_onpaste e
     # auto save on exit
     @on el: window, event: 'unload', handler: =>
         sessionStorage.auto_save = @value or ''

@@ -15,6 +15,6 @@ div '#chat', hidden: 'hidden', ->
         a '#uptime', -> '0s'
     textarea '#entry',
       rows: 1
-      maxlength: 10000
+      maxlength: 30000
       autofocus: on
       placeholder: '_'
