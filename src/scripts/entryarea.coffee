@@ -19,6 +19,7 @@ class EntryArea extends View
   ### private ###
   _image_mime_regex: /image\/(?:png|jpeg|qjpeg|gif|bmp)/
   _ondrop: (e) ->
+    # console.log e
     @_insertFiles [].slice.call e.dataTransfer.files
   _onpaste: (e) -> # paste images
     items = [].slice.call e.clipboardData.items
@@ -30,6 +31,7 @@ class EntryArea extends View
     return # alow file name pasted first
   _insertFiles: (files) ->
     return unless files
+    # console.log 'files', files
     files = [files] unless Array.isArray files
     files.forEach (file) =>
       if @_image_mime_regex.test file.type
@@ -110,7 +112,7 @@ class EntryArea extends View
     @on event: 'dragover', handler: (e) ->
       e.stopPropagation()
       e.preventDefault()
-      console.log 'dragover', e
+      # console.log 'dragover', e
       e.dataTransfer.dropEffect = 'copy' # Explicitly show this is a copy.
       false
     @on event: 'drop', handler: (e) => @_ondrop e
