@@ -41,6 +41,7 @@ class EntryArea extends View
     if blob.size > 512 * 1024 # 512 K
       @channel.system 'The image you pasted is too large.' 
       return
+    return unless window.FileReader?
     reader = new FileReader
     reader.onload = do (blob) => (e) =>
       fname = if blob.name then " alt=\"#{blob.name}\" title=\"#{blob.name}\"" else ''
