@@ -17,24 +17,35 @@ class EntryArea extends View
   ### static ###
   @create: (cfg) -> super @, cfg
   ### private ###
+  _image_mime_regex: /image\/(?:png|jpeg|qjpeg|gif|bmp)/
+  _ondrop: (e) ->
+    @_insertFiles [].slice.call e.dataTransfer.files
   _onpaste: (e) -> # paste images
     items = [].slice.call e.clipboardData.items
-    # console.log JSON.stringify items # will give you the mime types
-    blob = null
-    for item in items
-      if item.kind is 'file' and /image\/(?:png|jpeg|qjpeg|gif|bmp)/.test item.type
-        blob = item.getAsFile()
-        @_insertImage blob if blob
-        return
-    return
+    files = items.filter((item) -> item.kind is 'file')
+                 .map (item) -> item.getAsFile()
+    return unless files.length
+    # e.preventDefault() # alow file name pasted first
+    @_insertFiles files
+    return # alow file name pasted first
+  _insertFiles: (files) ->
+    return unless files
+    files = [files] unless Array.isArray files
+    files.forEach (file) =>
+      if @_image_mime_regex.test file.type
+        @_insertImage file
+      else
+        return # todo: support txt/src code files
+    false
   _insertImage: (blob) ->
     if blob.size > 512 * 1024 # 512 K
       @channel.system 'The image you pasted is too large.' 
       return
     reader = new FileReader
-    reader.onload = (e) =>
+    reader.onload = do (blob) => (e) =>
+      fname = if blob.name then " alt=\"#{blob.name}\" title=\"#{blob.name}\"" else ''
       dataurl = e.target.result
-      @_insertText "<img src=\"#{dataurl}\"/>" # todo: match mode
+      @_insertText "<img src=\"#{dataurl}\"#{fname}/>" # todo: match mode
       return
     reader.readAsDataURL blob
     return false
@@ -51,6 +62,7 @@ class EntryArea extends View
     arr.splice s, s - e, data
     # console.log 'inserted', narr
     @value = arr.join ''
+    @el.selectionStart = @el.selectionEnd = s + data.length
   ### public ###
   init: ->
     super()
@@ -91,6 +103,16 @@ class EntryArea extends View
     @on event: 'blur', handler: -> @placeholder = '_'
     # paste image
     @on event: 'paste', handler: (e) => @_onpaste e
+    # drop image
+    # @on event: 'dragenter', handler: (e) -> 
+    # @on event: 'dragleave', handler: (e) -> 
+    @on event: 'dragover', handler: (e) ->
+      e.stopPropagation()
+      e.preventDefault()
+      console.log 'dragover', e
+      e.dataTransfer.dropEffect = 'copy' # Explicitly show this is a copy.
+      false
+    @on event: 'drop', handler: (e) => @_ondrop e
     # auto save on exit
     @on el: window, event: 'unload', handler: =>
         sessionStorage.auto_save = @value or ''
