@@ -29,21 +29,20 @@ class App
   # end of constructor
   files:
     path: path.join __dirname, 'public'
+    regex: /^\/(#{favicon\.ico|client.(?:html|js|css)})(?:\?\d+)?$/ # no index.html
+    client: 'client.html'
     'favicon.ico': 'image/x-icon'
     'client.js'  : 'application/javascript'
     'client.css' : 'text/css'
-    'index.html' : 'text/html'
+    'client.html' : 'text/html'
   prepare: (callback) ->
     c = @cache = list: []
     files = Object.getOwnPropertyNames @files
-    regex = files.join('|').replace /\./g, '\.'
-    files.regex = new RegExp "^/(#{regex})(?:\?\d+)?$" #, 'i'
     timeout = setTimeout ->
       throw 'load files timeout'
     , 30*1000 # 30s
     files.forEach (f) => fs.readFile (path.join @files.path, f + '.gz'), 'binary', (err, data) =>
       throw err if err
-      # f = f.toLowerCase()
       c[f] =
         name: f
         content: data
@@ -71,10 +70,11 @@ class App
       # channel
       id = req.url
       Channel.create {id, io} unless Channel.has id
+      @serve @file.client, res
     else if files.regex.test req.url
       # static files
       file = req.url.match files.regex
-      @serve file[1], res # .toLowerCase()
+      @serve file[1], res
     else
       res.writeHead 404
       res.end 'resource not found'

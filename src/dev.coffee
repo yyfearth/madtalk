@@ -80,8 +80,8 @@ app.get Channel.ID_REGEX, (req, res) -> # '.' is not allowed
   compile_stylus (css) ->
     o.css = css
     o.js = compile_coffee()
-    res.render 'index', o
-  # render index
+    res.render 'client', o
+  # render client
 
 
 app.listen port
