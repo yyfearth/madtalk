@@ -261,11 +261,11 @@ task 'build', 'Build everything', ->
     isMinified: yes
   }
 
-  # stylusToCss {
-  #   from: 'src/styles/client.styl'
-  #   to: 'server/public/client.css'
-  #   isMinified: yes
-  # }
+  stylusToCss {
+    from: 'src/styles/client.styl'
+    to: 'server/public/client.css'
+    isMinified: yes
+  }
 
   # coffeeToHtml {
   #   from: 'src/views/index.coffee'
