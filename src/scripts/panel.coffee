@@ -23,16 +23,12 @@ class Panel extends View
 
   ### static ###
   @create: (cfg) -> super @, cfg
-  ### internal ###
-  _resize: -> # call by entry, after entry has been resized
-    @parent?._resize?() # pass to chat
-    return
   ### public ###
   init: ->
     @status.init() unless @status.inited
     @entry.init() unless @entry.inited
     super()
-
+    @entry.bind 'resized',=> @trigger 'resized'
     @
   # end of init
 

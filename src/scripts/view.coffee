@@ -27,11 +27,20 @@ class View # view controller base class
       hidden:
         get: -> _el.hidden
         set: (value) ->
+          return if false is @trigger "before#{if value then 'show' else 'hide'}", @
           _el.hidden = Boolean value
           _el.style.display = if value then 'none' else 'block'
+          @trigger "after#{if value then 'show' else 'hide'}", @
           return
     # console.log 'constructor view'
 
+    # auto bind listeners
+    if (_lsnrs = @cfg.listeners)?
+      @_events = {}
+      for event, listener of _lsnrs
+        @_events[event] = [listener] if _lsnrs.hasOwnProperty event
+
+    @trigger 'created', @
     # auto init
     @init() if @cfg.auto
   ### static ###
@@ -61,7 +70,6 @@ class View # view controller base class
     @
   ### public ###
   xss: xss_safe # util
-  listeners: {} # unused yet
   init: ->
     unless @inited # to ensure run only once
       console.log 'init', @type # only once
@@ -74,19 +82,23 @@ class View # view controller base class
     # end of unless inited
     @el = @cfg.el if @cfg.el
     @hidden = @cfg.hidden if @cfg.hidden?
+    @trigger 'inited', @
     @
   query: (selector, parent) ->
     (parent or @el or document).querySelector selector
   queryAll: (selector, parent) ->
     (parent or @el or document).querySelectorAll selector
   # end of init
+
+  # show hide shortcuts
   show: (show = yes) ->
     @hidden = not show
     @
   hide: (hide = yes) ->
     @hidden = hide
     @
-  # event
+
+  # dom events
   _els: ({els, el}) ->
     if el and els
       throw 'only set one of el or els'
@@ -100,11 +112,16 @@ class View # view controller base class
       els = [@el]
     els
   # end of get els
-  on: ({event, els, el, handler, bind}) -> # els or el
+  on: (event, {els, el, handler, bind}) -> # els or el
     throw 'need event name' unless event
+    # for (event, ..., handler)
+    if not handler? and (l = arguments.length) > 1 and typeof (h = arguments[l - 1]) is 'function'
+      handler = h
+      el = els = bind = null if l is 2
     throw 'need handler function' if typeof handler isnt 'function'
     # get els
     els = @_els {el, els}
+    console.log 'on', event, els, bind, handler
     # bind
     els.forEach (el) ->
       if bind isnt off # on
@@ -114,11 +131,12 @@ class View # view controller base class
       return
     @
   # end of on
-  off: (opt) ->
+  un: (event, opt) ->
+    opt = handler: opt if typeof opt is 'function'
     opt.bind = off
-    @on opt
+    @on event, opt
   # end of off
-  fire: ({event, els, el, data, e}) -> # untested yet! event is the name
+  fire: (event, {els, el, data, e} = {}) ->
     # get els
     els = @_els {el, els}
     # prepare e
@@ -131,3 +149,27 @@ class View # view controller base class
     els.forEach (el) -> el.dispatchEvent e # return
     @
   # end of fire
+  # end of dom events
+
+  # helper
+  wait: (t = 0, fn) ->
+    if typeof t is 'function'
+      [t, fn] = [fn or 0, t]
+    t = if t < 0 then 0 else t >>> 0
+    fn = fn.bind @
+    setTimeout fn, t # return
+  # end of wait
+
+  # custom events
+  bind: (event, fct) ->
+    ((@_events ?= {})[event] ?= []).push fct
+    @
+  unbind: (event, fct) ->
+    (evts = @_events?[event])?.splice? evts.indexOf(fct), 1
+    @
+  trigger: (event, args...) ->
+    return false if false is @_events?[event]?.every? (fct) => fct.apply @, args
+    @
+  # end of custom events
+
+  # events: inited|(before|after)(show|hide)

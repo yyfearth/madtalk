@@ -54,6 +54,27 @@ class Channel
     @
   # end of init
 
+  # # helper
+  # wait: (t = 0, fn) ->
+  #   if typeof t is 'function'
+  #     [t, fn] = [fn or 0, t]
+  #   t = if t < 0 then 0 else t >>> 0
+  #   fn = fn.bind @
+  #   setTimeout fn, t # return
+  # # end of wait
+
+  # # custom events
+  # bind: (event, fct) ->
+  #   ((@_events ?= {})[event] ?= []).push fct
+  #   @
+  # unbind: (event, fct) ->
+  #   (evts = @_events?[event])?.splice? evts.indexOf(fct), 1
+  #   @
+  # trigger: (event, args...) ->
+  #   return false if false is @_events?[event]?.every? (fct) => fct.apply @, args
+  #   @
+  # # end of custom events
+
   listen: -> # start listening, auto start when init
     console.log 'start listening channel', @id
     @on 'connection', (client) =>

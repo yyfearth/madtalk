@@ -27,6 +27,7 @@ class MsgLog extends View
   append: (msgs) ->
     msgs = [msgs] unless Array.isArray msgs
     return @ unless msgs.length
+    return @ if false is @trigger 'beforeappend', msgs, @
     fragment = document.createDocumentFragment()
     msgs.forEach (msg) =>
       return if msg.rendered # is msg.ts for modifies
@@ -49,7 +50,8 @@ class MsgLog extends View
     codes.forEach (code) ->
       # hljs.tabReplace = '<span class="indent">\t</span>'
       hljs.highlightBlock code, null, (code.parentNode.tagName isnt 'PRE')
-    @scroll no
+    @trigger 'afterappend', msgs, @
+    @scroll() # auto scroll
     @
   # end of append
   renderers:
@@ -65,20 +67,25 @@ class MsgLog extends View
     @renderers[type].call @, data
   # end of render
 
-  scroll: (immediately = no) ->
-    return unless (last = @el.lastChild)?
-    if immediately
+  scroll: ({defered, force} = {}) -> # default: {yes, no}
+    return @ unless (last = @el.lastChild)? # for no exception
+    if defered ? on
+      @wait -> @scroll yes
+    else
+      # maxscrolltop = @el.scrollHeight - @el.offsetHeight
+      # do not scroll if scroll top is greater than 1.5x cheight from bottom
+      return @ unless force or (@el.scrollHeight - @el.scrollTop < 1.5 * @el.clientHeight)
+      return @ if false is @trigger 'beforescroll', @el.scrollTop, @
       if last.scrollIntoViewIfNeeded?
         last.scrollIntoViewIfNeeded()
       if last.scrollIntoView?
         last.scrollIntoView()
       else
-        @el.scrollTop = @el.scrollHeight + 10000
-      #window.scrollTo 0, document.body.scrollHeight
-    else
-      setTimeout =>
-        @scroll yes
-      , 0
+        @el.scrollTop = last.offsetTop
+      @wait -> @trigger 'afterscroll', @el.scrollTop, @
+    @
 # end of class
+
+# additional events: (before|after)(append|scroll)
 
 View.reg MsgLog # reg

@@ -40,8 +40,8 @@ class EntryArea extends View
         return # todo: support txt/src code files
     false
   _insertImage: (blob) ->
-    if blob.size > 512 * 1024 # 512 K
-      @channel.system 'The image you pasted is too large.' 
+    if blob.size > 256 * 1024 # 256 K
+      @channel.system 'The image is too large.' 
       return
     return unless window.FileReader?
     reader = new FileReader
@@ -66,62 +66,74 @@ class EntryArea extends View
     # console.log 'inserted', narr
     @value = arr.join ''
     @el.selectionStart = @el.selectionEnd = s + data.length
+  # enter / up / down
+  _trvl_history: (e, up = yes) =>
+    return if @history.cur < 0 and @value or /\n/.test @value
+    e.preventDefault()
+    cur = @history.cur + if up then 1 else -1
+    #console.log 'history', cur
+    return false if cur < 0 or cur >= @history.length
+    @history.cur = cur
+    @value = @history[cur]
+    false
+  _onkeydown: (e) ->
+    if e.keyCode is 13 and not (e.ctrlKey or e.metaKey or e.shiftKey or e.altKey)
+      e.preventDefault()
+      @_onchanged()
+      return false unless @value.trim()
+      @send()
+      @value = '' # change fired
+      # @_onchanged()
+      return false
+    else if e.keyCode is 38
+      @_trvl_history e, yes
+    else if e.keyCode is 40
+      @_trvl_history e, no
+    else if e.keyCode is 13 # new line
+      @_onchanged()
+    else
+      clearTimeout _delay if (_delay = @_onchanged._delay)
+      @_onchanged._delay = @wait 300, @_onchanged
+    return
+  _onchanged: ->
+    @_onchanged._delay = clearTimeout _delay if (_delay = @_onchanged._delay)
+    if (_ov = @_onchanged._value) isnt (_nv = @value)
+      @trigger 'changed', _ov, _nv, @
+      # console.log 'changed', _ov, _nv
+      @_onchanged._value = _nv
+      @resize()
+    return
   ### public ###
   init: ->
     super()
-    _resize = @resize.bind @ # JS 1.8.5
-    # enter / up / down
-    _trvl_history = (e, up = yes) =>
-      return if @history.cur < 0 and @value or /\n/.test @value
-      e.preventDefault()
-      cur = @history.cur + if up then 1 else -1
-      #console.log 'history', cur
-      return false if cur < 0 or cur >= @history.length
-      @history.cur = cur
-      @value = @history[cur]
-      false
-    @on event: 'keydown', handler: (e) =>
-      if e.keyCode is 13 and not (e.ctrlKey or e.metaKey or e.shiftKey or e.altKey)
-        e.preventDefault()
-        return false unless @value.trim()
-        @send()
-        return false
-      else if e.keyCode is 38
-        _trvl_history e, yes
-      else if e.keyCode is 40
-        _trvl_history e, no
-      else if e.keyCode is 13 # new line
-        _resize()
-      else
-        # todo: delay _resize
-      return
-    # end of fire_change
-    # @on event: 'keydown', handler: _resize
-    @on event: 'cut', handler: _resize
-    @on event: 'past', handler: _resize
-    @on event: 'drop', handler: _resize
-    @on event: 'change', handler: _resize
-    # placeholder
-    @on event: 'focus', handler: -> @placeholder = ''
-    @on event: 'blur', handler: -> @placeholder = '_'
-    # paste image
-    if localStorage.pastimage is 'on' # tmp
-      @on event: 'paste', handler: (e) => @_onpaste e
-    # drop image
-    # @on event: 'dragenter', handler: (e) -> 
-    # @on event: 'dragleave', handler: (e) -> 
-    @on event: 'dragover', handler: (e) ->
+    # for keydown and changed
+    _changed = @_onchanged.bind @
+    @on 'keydown', (e) => @_onkeydown e
+    @on 'cut', _changed
+    @on 'past', _changed
+    @on 'drop', _changed
+    @on 'change', _changed
+    # for placeholder
+    @on 'focus', -> @placeholder = ''
+    @on 'blur', -> @placeholder = '_'
+    # for paste files
+    if localStorage.paste is 'on' # tmp
+      @on 'paste', (e) => @_onpaste e
+    # for drop files
+    # @on 'dragenter', (e) -> 
+    # @on 'dragleave', (e) -> 
+    @on 'dragover', (e) ->
       e.stopPropagation()
       e.preventDefault()
       # console.log 'dragover', e
       e.dataTransfer.dropEffect = 'copy' # Explicitly show this is a copy.
       false
-    @on event: 'drop', handler: (e) => @_ondrop e
+    @on 'drop', (e) => @_ondrop e
     # auto save on exit
-    @on el: window, event: 'unload', handler: =>
+    @on 'unload', el: window, =>
         sessionStorage.auto_save = @value or ''
         return
-    @on el: window, event: 'resize', handler: => @resize()
+    @on 'resize', el: window, => @resize()
     # restore save # todo: use localstorage with sid
     @value = auto_save = sessionStorage.auto_save or ''
     if auto_save
@@ -129,38 +141,38 @@ class EntryArea extends View
         @el.selectionStart = @el.value.length
       , 0
     else # try
-      _resize()
+      _changed()
       setTimeout ->
-        _resize()
+        _changed()
       , 300
     @
   # end of init
   ### public ###
-  send: ->
-    txt = @value
-    channel.msg type: @mode.type, data: txt # todo: type
+  send: (txt = @value) ->
+    channel.msg (msg = type: @mode.type, data: txt) # todo: type
     @history.unshift txt if @history[0] isnt txt
     @history.cur = -1
-    @value = ''
-    @resize()
+    @trigger 'sent', msg, @
     @
   # end of send
   resize: ->
     return @ unless @inited
-    panel_resize = =>
+    panel_changed = =>
       setTimeout =>
-        @parent?._resize?()
+        @trigger 'resized', @
       , 0
     if @value?.trim()
       setTimeout =>
         @el.style.height = 'auto'
         @el.style.height = "#{Math.min @el.scrollHeight, window.innerHeight / 2}px"
-        panel_resize()
+        panel_changed()
       , 0
     else
       @el.style.height = 'auto'
-      panel_resize()
+      panel_changed()
     @
 # end of class
+
+# additional events: sent:(msg)|resized|changed:(old,new,@)
 
 View.reg EntryArea # reg

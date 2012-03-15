@@ -52,26 +52,28 @@ class Channel
     delete sessionStorage.user
     return
 
-  # events
-  
-  # bind  : function(event, fct){
-  #   this._events = this._events || {};
-  #   this._events[event] = this._events[event] || [];
-  #   this._events[event].push(fct);
-  # },
-  # unbind  : function(event, fct){
-  #   this._events = this._events || {};
-  #   if( event in this._events === false  )  return;
-  #   this._events[event].splice(this._events[event].indexOf(fct), 1);
-  # },
-  # trigger : function(event /* , args... */){
-  #   this._events = this._events || {};
-  #   if( event in this._events === false  )  return;
-  #   for(var i = 0; i < this._events[event].length; i++){
-  #     this._events[event][i].apply(this, Array.prototype.slice.call(arguments, 1))
-  #   }
-  # }
+  # # helper
+  # wait: (t = 0, fn) ->
+  #   if typeof t is 'function'
+  #     [t, fn] = [fn or 0, t]
+  #   t = if t < 0 then 0 else t >>> 0
+  #   fn = fn.bind @
+  #   setTimeout fn, t # return
+  # # end of wait
 
+  # TODO: use this to replace orginal event system
+  # # custom events
+  # bind: (event, fct) ->
+  #   ((@_events ?= {})[event] ?= []).push fct
+  #   @
+  # unbind: (event, fct) ->
+  #   (evts = @_events?[event])?.splice? evts.indexOf(fct), 1
+  #   @
+  # trigger: (event, args...) ->
+  #   return false if false is @_events?[event]?.every? (fct) => fct.apply @, args
+  #   @
+  # # end of custom events
+ 
   event_regex: ///^(:? leave
     | system | message | sync
     | (:?user)?(?:online|offline|leave)

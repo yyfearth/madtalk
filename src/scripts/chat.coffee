@@ -23,11 +23,14 @@ class Chat extends View
     console.log 'chat init'
     @notifier.init() # todo: init after login, move to chat view
     @notifier.onfocus = => @activate yes
-    @on event: 'focus', el: window, handler: => @activate on
-    @on event: 'blur' , el: window, handler: => @activate off
+    @on 'focus', el: window, => @activate on
+    @on 'blur' , el: window, => @activate off
     # init views
     @msglog.init()
     @panel.init()
+    @panel.bind 'resize', =>
+      @msglog.bottom = @panel.height + 1 # log resize
+      return
     @activate on # default on
     @
   activate: (active = on) ->
@@ -40,9 +43,5 @@ class Chat extends View
   notify: (msg) ->
     @notifier?.notify msg
     @
-  ### internal ###
-  _resize: -> # call by panel, after entry has been resized
-    @msglog.bottom = @panel.height + 1 # log resize
-    return
 
 View.reg Chat # reg
