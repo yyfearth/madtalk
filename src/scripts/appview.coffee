@@ -17,9 +17,11 @@ class AppView extends View
   ### public ###
   init: ->
     super()
+    if localStorage.transition? isnt 'off' # tmp
+      document.documentElement.className += 'transition'
     # init views
     @login.init()
-    # @chat.init()
+    # @chat.init() # chat init after login
     @
 
 View.reg AppView # reg

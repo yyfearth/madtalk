@@ -15,7 +15,6 @@
     list-style none
     box-sizing(border-box)
     box-shadow(0 -0.2em 1em rgba(#0005))
-    transition(background-color 0.3s ease-in-out)
     z-index 1001
     background rgba(#7333)
     li
@@ -43,8 +42,13 @@
     min-height 3em // inc padding
     color $font-color
     z-index 1000
-    transition(background-color 0.1s linear)
     background-color rgba($bkg-color, 0.5)
     &:focus
       background-color $bkg-color
+
+.transition #panel
+  > ul
+    transition(background-color 0.3s ease-in-out)
+  > textarea
+    transition(background-color 0.15s linear)
 

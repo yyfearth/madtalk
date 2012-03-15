@@ -105,7 +105,8 @@ class EntryArea extends View
     @on event: 'focus', handler: -> @placeholder = ''
     @on event: 'blur', handler: -> @placeholder = '_'
     # paste image
-    @on event: 'paste', handler: (e) => @_onpaste e
+    if localStorage.pastimage is 'on' # tmp
+      @on event: 'paste', handler: (e) => @_onpaste e
     # drop image
     # @on event: 'dragenter', handler: (e) -> 
     # @on event: 'dragleave', handler: (e) -> 

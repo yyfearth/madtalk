@@ -5,18 +5,21 @@
   right 0
   top 0
   bottom 10em // default
+  margin 0
   padding 0.5em
   background transparent
   overflow auto
   // overflow hidden
   // overflow-y auto
-  margin 0
+
+  info-width = 6.5em
   > li
+    position relative
     display block
+    list-style-type none
     no-space()
     border-radius 0.3em
     background-color lighten($bkg-color, 2%)
-    transition(all 0.3s ease-in-out)
     opacity 0.88
     &:nth-child(even)
       background-color lighten($bkg-color, 3%)
@@ -30,7 +33,7 @@
       display inline-block
       text-align center
       vertical-align top
-      width 6.5em
+      width info-width
       color darken($font-color, 25%)
       padding 0.3em
       .nick, .ts
@@ -41,25 +44,34 @@
         font-weight bold
         min-height 0.5em
     > .data
+      position relative
       margin 1px
+      right 0
       margin-left 6em
       padding 0.1em 0.5em
-      display inline-block
       text-align left
       vertical-align top
       color $font-color
       min-height 2em
       border-left 1px dashed #444
+      word-wrap break-word
+      // calc-width(100% \- info-width \- 0.5em) // not needed
+      //text-wrap suppress // not supported yet
+      //word-break hyphenation // not supported yet
       p
-        margin 0.5em 0
+        margin 0.5em 5px
+      a // *
+         word-wrap break-word
       *:first-child
         margin-top 0.3em
       *:last-child
         margin-bottom 0.3em
-      pre
+      pre, code
         white-space pre-wrap
       code
         border-radius 0.25em
+      img
+        max-width 100%
     // data color
     &.message > .data
       color #fff
@@ -70,3 +82,6 @@
         font-style italic
     //.error > .data
     //  color #933
+
+.transition #msglog > li
+  transition(all 0.3s ease-in-out)

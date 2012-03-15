@@ -66,8 +66,14 @@ class MsgLog extends View
   # end of render
 
   scroll: (immediately = no) ->
+    return unless (last = @el.lastChild)?
     if immediately
-      @el.lastChild?.scrollIntoViewIfNeeded()
+      if last.scrollIntoViewIfNeeded?
+        last.scrollIntoViewIfNeeded()
+      if last.scrollIntoView?
+        last.scrollIntoView()
+      else
+        @el.scrollTop = @el.scrollHeight + 10000
       #window.scrollTo 0, document.body.scrollHeight
     else
       setTimeout =>
