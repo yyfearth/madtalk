@@ -83,6 +83,12 @@ app.get Channel.ID_REGEX, (req, res) -> # '.' is not allowed
     res.render 'client', o
   # render client
 
+# Handle SIGUSR2, but only once
+process.once 'SIGUSR2', ->
+  console.log 'Doing shutdown tasks... (nothing yet)'
+  # async
+  process.kill process.pid, 'SIGUSR2'
+  return
 
 app.listen port
 console.log "app listening on port #{port} ..."
