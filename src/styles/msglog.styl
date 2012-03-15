@@ -45,8 +45,7 @@
         min-height 0.5em
     > .data
       position relative
-      margin 1px
-      right 0
+      margin 0
       margin-left 6em
       padding 0.1em 0.5em
       text-align left
@@ -55,6 +54,7 @@
       min-height 2em
       border-left 1px dashed #444
       word-wrap break-word
+      overflow hidden
       // calc-width(100% \- info-width \- 0.5em) // not needed
       //text-wrap suppress // not supported yet
       //word-break hyphenation // not supported yet
@@ -67,6 +67,7 @@
       *:last-child
         margin-bottom 0.3em
       pre, code
+        word-wrap break-word
         white-space pre-wrap
       code
         border-radius 0.25em
