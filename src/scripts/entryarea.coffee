@@ -13,7 +13,7 @@ class EntryArea extends View
         get: -> @el?.value # do not trim
         set: (value) -> if @el? and value isnt @el.value
           @el.value = value # wont auto fire change event
-          @fire event: 'change' # return
+          @fire 'change' # return
   ### static ###
   @create: (cfg) -> super @, cfg
   ### private ###
