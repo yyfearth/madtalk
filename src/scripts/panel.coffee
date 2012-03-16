@@ -28,7 +28,7 @@ class Panel extends View
     @status.init() unless @status.inited
     @entry.init() unless @entry.inited
     super()
-    @entry.bind 'resized',=> @trigger 'resized'
+    @entry.bind 'resized', => @trigger 'resized'
     @
   # end of init
 

@@ -86,8 +86,9 @@ class View # view controller base class
     @
   query: (selector, parent) ->
     (parent or @el or document).querySelector selector
-  queryAll: (selector, parent) ->
-    (parent or @el or document).querySelectorAll selector
+  queryAll: (selector, parent, usearray = yes) ->
+    els = (parent or @el or document).querySelectorAll selector
+    return if usearray then [].slice.call els else els
   # end of init
 
   # show hide shortcuts
@@ -106,7 +107,7 @@ class View # view controller base class
       el = @query el if typeof el is 'string'
       els = [el]
     else if els
-      els = [].slice.call @queryAll els if typeof els is 'string'
+      els = @queryAll els if typeof els is 'string'
       els = [els] unless Array.isArray els
     else
       els = [@el]
@@ -114,7 +115,7 @@ class View # view controller base class
   # end of get els
 
   # class helper
-  # @cls: (act = 'add', els = @el, cls) -> # or (act, cls) and els is @
+  # cls: (act = 'add', els = @el, cls) -> # or (act, cls) and els is @
   #   if typeof els is 'string' and not cls
   #     cls = els
   #     els = @el
@@ -131,30 +132,37 @@ class View # view controller base class
   #       if el.className
   #         # do not need such a powerful and slow helper
   # @
-  @cls: (act = 'add', el = @el, cl) -> # or (act, cl) and el is @
-    if typeof el is 'string' and not cl
-      cl = el
+  cls: (act = 'add', el = @el, cls) -> # or (act, cls) and el is @
+    if typeof el is 'string' and not cls
+      cls = el
       el = @el
     unless /^(?:add|remove|has)$/.test act
       throw "unexpected act #{act}, expect add/remove/contains"
-    cl = cl.trim()
+    cls = cls.trim().split /\s+/
     if @el.classList? # check only
-      r = el.classList[act] cl
-      return if act is 'contains' then r else @
+      if act is 'contains'
+        return cls.every (cl) -> el.classList[act] cl
+      else
+        cls.forEach (cl) -> el.classList[act] cl
     else # className
-      regex = new RegExp "\b#{cl}\b", 'i'
-      switch act
-        when 'contains'
-          return regex.test el.className
-        when 'remove'
-          el.className = el.className.replace regex, ''
-        when 'add'
+      if act is 'add'
+        cls.forEach (cl) ->
+          regex = new RegExp "\\b#{cl}\\b", 'i'
           el.className += " #{cl}" unless regex.test el.className
+          return
+      else
+        _cls = (cls.join '|').replace /\./g, '\\.'
+        regex = new RegExp "\\b(?:#{_cls})\\b", 'ig'
+        if act is 'remove'
+          el.className = el.className.replace regex, ''
+        else
+          r = regex.match el.className
+          return r > cls.length
     @
-  @addcls: (el, cl) -> @cls 'add', el, cl
-  @rmcls: (el, cl) -> @cls 'remove', el, cl
-  @hascls: (el, cl) -> @cls 'contains', el, cl
-  
+  addcls: (el, cl) -> @cls 'add', el, cl
+  rmcls: (el, cl) -> @cls 'remove', el, cl
+  hascls: (el, cl) -> @cls 'contains', el, cl
+
   # dom events
   on: (event, {els, el, handler, bind}) -> # els or el
     throw 'need event name' unless event
@@ -165,7 +173,7 @@ class View # view controller base class
     throw 'need handler function' if typeof handler isnt 'function'
     # get els
     els = @_els {el, els}
-    console.log 'on', event, els, bind, handler
+    # console.log 'on', event, els, bind, handler
     # bind
     els.forEach (el) ->
       if bind isnt off # on

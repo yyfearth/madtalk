@@ -28,13 +28,14 @@ class Chat extends View
     # init views
     @msglog.init()
     @panel.init()
-    @panel.bind 'resize', =>
+    @panel.bind 'resized', =>
+      console.log 'resized'
       @msglog.bottom = @panel.height + 1 # log resize
       return
     @activate on # default on
     @
   activate: (active = on) ->
-    @active = active # globle lock
+    @msglog.active = @active = active # globle lock
     @notifier.active = not @active
     if active
       window.focus()

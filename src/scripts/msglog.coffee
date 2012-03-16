@@ -4,6 +4,7 @@ class MsgLog extends View
   type: 'msglog'
   constructor: (@cfg) ->
     super @cfg # with auto init
+    _active = null
     ### public ###
     Object.defineProperties @,
       bottom:
@@ -12,6 +13,12 @@ class MsgLog extends View
           value += 'px' if (typeof value is 'number') or /$[\d\.]+$/.test value
           @el.style.bottom = value
           return
+      scrollbottom: get: -> @el.scrollTop + @el.clientHeight - 20
+      active:
+        get: -> _active
+        set: (value) ->
+          @_activate (_active = value) if _active isnt value
+          return
   ### static ###
   @create: (cfg) -> super @, cfg
   ### public ###
@@ -19,6 +26,7 @@ class MsgLog extends View
     super()
     @clear()
     hljs.initHighlighting()
+    @on 'scroll', => @_scrolled()
     #Object.defineProperties @, # el shotcuts
   # end of init
   clear: ->
@@ -33,14 +41,17 @@ class MsgLog extends View
       return if msg.rendered # is msg.ts for modifies
       # todo: renderer
       li = document.createElement 'li'
-      li.className = 'log unread' + (msg.class or 'message') # default is message
-      li.className += ' ' + msg.type if msg.type
+      li.className = 'log'
+      @addcls li, msg.class or 'message' # default is message
+      @addcls li, msg.type if msg.type
+      @addcls li, 'unread' unless msg.local
       nick = if msg.user?.nick then @xss.str msg.user.nick else ''
       ts = new Date(msg.ts or new Date).getShortTimeString no
       li.innerHTML = "<div class=\"info\">
         <label class=\"nick\">#{nick}</label>
         <label class=\"ts\">#{ts}</label></div>
         <div class=\"data\">#{@render msg}</div>"
+      li.setAttribute 'data-ts', msg.ts
       fragment.appendChild li
       msg.rendered = msg.ts
       return
@@ -51,6 +62,7 @@ class MsgLog extends View
       # hljs.tabReplace = '<span class="indent">\t</span>'
       hljs.highlightBlock code, null, (code.parentNode.tagName isnt 'PRE')
     @trigger 'afterappend', msgs, @
+    @wait 300, @_updateread # force
     @scroll() # auto scroll
     @
   # end of append
@@ -67,25 +79,74 @@ class MsgLog extends View
     @renderers[type].call @, data
   # end of render
 
+  # override with a simpler implitation
+  # only accept one el and one cls
+  cls: (act = 'add', el = @el, cls) ->
+    if not cls and typeof el is 'string'
+      cls = el
+      el = @el
+    if el.classList
+      return false if false is el.classList[act] cls
+    else
+      switch act
+        when 'add'
+          el.className += cls unless (new RegExp "\\b#{cls}\\b", 'i').test el.className
+        when 'remove'
+          el.className = el.className.replace (new RegExp "\\b#{cls}\\b", 'ig'), ''
+        when 'contains'
+          return (new RegExp "\\b#{cls}\\b", 'i').test el.className
+    @
+
+  _activate: (active = on) ->
+    @_updateread() if active
+    @
+  _updateread: -> # updated unread status
+    return unless @active
+    els = @queryAll 'li.log.unread'
+    return unless els.length
+    # console.log 'for unread', els.length, els
+    isreadall = els.every (el) =>
+      read = el.offsetTop < @scrollbottom
+      if read
+        ts = el.getAttribute 'data-ts'
+        @rmcls el, 'unread'
+        @trigger 'read', ts >>> 0, el, @
+        @_last_read = el
+        # console.log 'read', el, read
+      # else console.log 'unread', el.offsetTop, @scrollbottom, el
+      read
+    return
+  _scrolled: -> # defered scrolled
+    return if @_scrolled._defer
+    @_scrolled._defer = @wait 1000, -> # 1s
+      @_scrolled._defer = null
+      # console.log 'scrolled', @el.scrollTop
+      @trigger 'scrolled', @el.scrollTop, @
+      @_updateread()
+    return
   scroll: ({defered, force} = {}) -> # default: {yes, no}
     return @ unless (last = @el.lastChild)? # for no exception
-    if defered ? on
-      @wait -> @scroll yes
-    else
-      # maxscrolltop = @el.scrollHeight - @el.offsetHeight
-      # do not scroll if scroll top is greater than 1.5x cheight from bottom
-      return @ unless force or (@el.scrollHeight - @el.scrollTop < 1.5 * @el.clientHeight)
-      return @ if false is @trigger 'beforescroll', @el.scrollTop, @
+    _scroll = =>
+      # do not scroll unless last read msg above client height
+      # console.log 'scroll req', force, @_last_read.offsetTop, @scrollbottom
+      return @ unless force or ((@_last_read or @el).offsetTop - @scrollbottom < @el.clientHeight)
+      # console.log 'do scroll'
+      # return @ if false is @trigger 'beforescroll', @el.scrollTop, @
       if last.scrollIntoViewIfNeeded?
         last.scrollIntoViewIfNeeded()
       if last.scrollIntoView?
         last.scrollIntoView()
       else
         @el.scrollTop = last.offsetTop
-      @wait -> @trigger 'afterscroll', @el.scrollTop, @
+      @_scrolled()
+    # end of _scroll
+    if defered ? on
+      @wait _scroll
+    else
+      _scroll()
     @
 # end of class
 
-# additional events: (before|after)(append|scroll)
+# additional events: (before|after)append|scrolled:(scrolltop)|read:(msgts, msgel)
 
 View.reg MsgLog # reg
