@@ -152,6 +152,8 @@ class Channel
     @
   # end of record
 
+  dump: -> localStorage["channel_dump_#{@id.slice 1}"] = JSON.stringify @records
+
   ### send message
   @param msg {object} messsage data {data: 'xxx', type: 'text|gfm|md|...'}
   @param callback {function} server boardcase successful, function (bool ok)

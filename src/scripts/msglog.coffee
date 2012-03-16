@@ -36,7 +36,12 @@ class MsgLog extends View
     msgs = [msgs] unless Array.isArray msgs
     return @ unless msgs.length
     return @ if false is @trigger 'beforeappend', msgs, @
-    @el.appendChild @_renderlist msgs
+    fragment = document.createDocumentFragment()
+    msgs.forEach (msg) => unless msg.rendered # is msg.ts for modifies
+      fragment.appendChild @_renderitem msg
+      msg.rendered = msg.ts
+      return
+    @el.appendChild fragment
     codes = [].slice.call @el.querySelectorAll 'code'
     # console.log 'hi', codes, hljs
     codes.forEach (code) ->
@@ -47,28 +52,21 @@ class MsgLog extends View
     @scroll() # auto scroll
     @
   # end of append
-  _renderlist: (msgs) ->
-    fragment = document.createDocumentFragment()
-    msgs.forEach (msg) =>
-      return if msg.rendered # is msg.ts for modifies
-      # todo: renderer
-      li = document.createElement 'li'
-      li.className = 'log'
-      @addcls li, msg.class or 'message' # default is message
-      @addcls li, msg.type if msg.type
-      @addcls li, 'unread' unless msg.local
-      nick = if msg.user?.nick then @xss.str msg.user.nick else ''
-      ts = new Date(msg.ts or new Date).getShortTimeString no
-      li.innerHTML = "<div class=\"info\">
-        <label class=\"nick\">#{nick}</label>
-        <label class=\"ts\">#{ts}</label></div>
-        <div class=\"data\">#{@render msg}</div>"
-      li.setAttribute 'data-ts', msg.ts
-      fragment.appendChild li
-      msg.rendered = msg.ts
-      return
-    # end of foreach
-    fragment # return
+  _renderitem: (msg) ->
+    # todo: renderer
+    li = document.createElement 'li'
+    li.className = 'log'
+    @addcls li, msg.class or 'message' # default is message
+    @addcls li, msg.type if msg.type
+    @addcls li, 'unread' unless msg.local
+    nick = if msg.user?.nick then @xss.str msg.user.nick else ''
+    ts = new Date(msg.ts or new Date).getShortTimeString no
+    li.innerHTML = "<div class=\"info\">
+      <label class=\"nick\">#{nick}</label>
+      <label class=\"ts\">#{ts}</label></div>
+      <div class=\"data\">#{@render msg}</div>"
+    li.setAttribute 'data-ts', msg.ts
+    li
   # end of render list
   renderers:
     default: # http://webreflection.blogspot.com/2012/02/js1k-markdown.html
@@ -149,10 +147,15 @@ class MsgLog extends View
     else
       _scroll()
     @
-  exports: -> # (type = 'html') 
-    lis = @_renderlist @channel.records
-    uri = 'data:text/html;charset=utf-8,' + lis.innerHTML
-    window.open uri
+  exports: -> # (type = 'html')
+    ul = document.createElement 'ul'
+    ul.id = 'msglog'
+    @channel.records.forEach (msg) =>
+      ul.appendChild @_renderitem msg
+      return
+    # console.log ul #, @channel.records
+    uri = 'data:text/html;charset=utf-8,' + ul.outerHTML
+    window.open uri, 'exports'
     @
 # end of class
 
