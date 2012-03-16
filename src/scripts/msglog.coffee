@@ -36,6 +36,18 @@ class MsgLog extends View
     msgs = [msgs] unless Array.isArray msgs
     return @ unless msgs.length
     return @ if false is @trigger 'beforeappend', msgs, @
+    @el.appendChild @_renderlist msgs
+    codes = [].slice.call @el.querySelectorAll 'code'
+    # console.log 'hi', codes, hljs
+    codes.forEach (code) ->
+      # hljs.tabReplace = '<span class="indent">\t</span>'
+      hljs.highlightBlock code, null, (code.parentNode.tagName isnt 'PRE')
+    @trigger 'afterappend', msgs, @
+    @wait 300, @_updateread # force
+    @scroll() # auto scroll
+    @
+  # end of append
+  _renderlist: (msgs) ->
     fragment = document.createDocumentFragment()
     msgs.forEach (msg) =>
       return if msg.rendered # is msg.ts for modifies
@@ -55,17 +67,9 @@ class MsgLog extends View
       fragment.appendChild li
       msg.rendered = msg.ts
       return
-    @el.appendChild fragment
-    codes = [].slice.call @el.querySelectorAll 'code'
-    # console.log 'hi', codes, hljs
-    codes.forEach (code) ->
-      # hljs.tabReplace = '<span class="indent">\t</span>'
-      hljs.highlightBlock code, null, (code.parentNode.tagName isnt 'PRE')
-    @trigger 'afterappend', msgs, @
-    @wait 300, @_updateread # force
-    @scroll() # auto scroll
-    @
-  # end of append
+    # end of foreach
+    fragment # return
+  # end of render list
   renderers:
     default: # http://webreflection.blogspot.com/2012/02/js1k-markdown.html
       `function markdown(f){/*!(C) WebReflection*/for(var b="</code></pre>",c="blockquote>",e="(?:\\r\\n|\\r|\\n|$)",d="(.+?)"+e,a=[],h=["&(?!#?[a-z0-9]+;)","&amp;","<","&lt;",">","&gt;","^(?:\\t| {4})"+d,function(i,j){return a.push(j+"\n")&&"\0"},"^"+d+"=+"+e,"<h1>$1</h1>\n","^"+d+"-+"+e,"<h2>$1</h2>\n","^(#+)\\s*"+d,function(i,l,k,j){return"<h"+(j=l.length)+">"+k.replace(/#+$/,"")+"</h"+j+">\n"},"(?:\\* \\* |- - |\\*\\*|--)[-*][-* ]*"+e,"<hr/>\n","  +"+e,"<br/>","^ *(\\* |\\+ |- |\\d+. )"+d,function(i,l,k,j){return"<"+(j=/^\d/.test(l)?"ol>":"ul>")+"<li>"+markdown(k)+"</li></"+j},"</(ul|ol)>\\s*<\\1>","","([_*]{1,2})([^\\2]+?)(\\1)",function(i,l,k,j){return"<"+(j=l.length==2?"strong>":"em>")+k+"</"+j},"\\[(.+?)\\]\\((.+?) (\"|')(.+?)(\\3)\\)",'<a href="$2" title="$4">$1</a>',"^&gt; "+d,function(i,j){return"<"+c+markdown(j)+"</"+c},"</"+c+"\\s*<"+c,"","(\x60{1,2})([^\\r\\n]+?)\\1","<code>$2</code>","\\0",function(i){return"<pre><code>"+a.shift()+b},b+"\\s*<pre><code>",""],g=0;g<h.length;){f=f.replace(RegExp(h[g++],"gm"),h[g++])}return f}`
@@ -144,6 +148,11 @@ class MsgLog extends View
       @wait _scroll
     else
       _scroll()
+    @
+  exports: -> # (type = 'html') 
+    lis = @_renderlist @channel.records
+    uri = 'data:text/html;charset=utf-8,' + lis.innerHTML
+    window.open uri
     @
 # end of class
 

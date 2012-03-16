@@ -5,8 +5,8 @@ class EntryArea extends View
   mode: type: 'gfm' # default type for now
   constructor: (@cfg) ->
     super @cfg # with auto init
-    @history = [] # todo: save history with cur value together
-    @history.cur = -1 # for prev is 0
+    @history = [''] # max length 100
+    @history.cur = 0 # 0 for current value
     ### public ###
     Object.defineProperties @,
       value:
@@ -71,8 +71,9 @@ class EntryArea extends View
     return if @history.cur < 0 and @value or /\n/.test @value
     e.preventDefault()
     cur = @history.cur + if up then 1 else -1
-    #console.log 'history', cur
+    # console.log 'history', cur
     return false if cur < 0 or cur >= @history.length
+    @history[0] = @value if @history.cur is 0
     @history.cur = cur
     @value = @history[cur]
     false
@@ -131,27 +132,36 @@ class EntryArea extends View
     @on 'drop', (e) => @_ondrop e
     # auto save on exit
     @on 'unload', el: window, =>
-        sessionStorage.auto_save = @value or ''
-        return
+      @history[0] = @value
+      sessionStorage.history = JSON.stringify @history
+      return
     @on 'resize', el: window, => @resize()
     # restore save # todo: use localstorage with sid
-    @value = auto_save = sessionStorage.auto_save or ''
-    if auto_save
-      setTimeout =>
-        @el.selectionStart = @el.value.length
-      , 0
-    else # try
+    if (_history = sessionStorage.history)
+      try
+        _history = JSON.parse _history
+        console.log _history
+        _history = [''] unless (Array.isArray _history) and _history.length > 0
+      catch error
+        _history = ['']
+      @history = _history
+      @history.cur = 0
+    if (@value = @history[0] or '')
+      @wait -> @el.selectionStart = @el.value.length
+    else
       _changed()
-      setTimeout ->
-        _changed()
-      , 300
+    @wait 300, @resize # ensure
     @
   # end of init
   ### public ###
   send: (txt = @value) ->
     channel.msg (msg = type: @mode.type, data: txt) # todo: type
-    @history.unshift txt if @history[0] isnt txt
-    @history.cur = -1
+    # console.log @history[0].trim(), (@history.length < 2 or @history[0] isnt @history[1]), @history
+    @history[0] = @value
+    @history.cur = 0
+    if @history.length < 2 or @history[0] isnt @history[1]
+      @history.unshift ''
+      @history.pop() while @history.length > 100 # max length 100
     @trigger 'sent', msg, @
     @
   # end of send
