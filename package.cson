@@ -2,7 +2,7 @@
 name: 'madtalk'
 description: 'MadTalk'
 keywords: ['madtalk', 'chat', 'markdown', 'coffee', 'stylus', 'coffeekup']
-version: '0.5.2'
+version: '0.6.0'
 author: 'Wilson Young <yyfearth@gmail.com>'
 contributors: [
 	name: 'Wilson Young'
