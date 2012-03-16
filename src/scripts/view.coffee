@@ -98,7 +98,7 @@ class View # view controller base class
     @hidden = hide
     @
 
-  # dom events
+  # helper
   _els: ({els, el}) ->
     if el and els
       throw 'only set one of el or els'
@@ -112,6 +112,50 @@ class View # view controller base class
       els = [@el]
     els
   # end of get els
+
+  # class helper
+  # @cls: (act = 'add', els = @el, cls) -> # or (act, cls) and els is @
+  #   if typeof els is 'string' and not cls
+  #     cls = els
+  #     els = @el
+  #   cls = cls.trim().split /\s+/ if typeof cls is 'string'
+  #   throw 'no class names given' unless cls?.length
+  #   unless /^(?:add|remove)$/.test act
+  #     throw "unexpected act #{act}, expect add/remove"
+  #   els = @_els {els}
+  #   if @el.classList? # check only
+  #     els.forEach (el) -> cls.forEach (cl) -> el.classList[act]? cl
+  #   else # className
+  #     els.forEach (el) -> cls.forEach (cl) ->
+  #       ocls = el.className.trim().split /\s+/
+  #       if el.className
+  #         # do not need such a powerful and slow helper
+  # @
+  @cls: (act = 'add', el = @el, cl) -> # or (act, cl) and el is @
+    if typeof el is 'string' and not cl
+      cl = el
+      el = @el
+    unless /^(?:add|remove|has)$/.test act
+      throw "unexpected act #{act}, expect add/remove/contains"
+    cl = cl.trim()
+    if @el.classList? # check only
+      r = el.classList[act] cl
+      return if act is 'contains' then r else @
+    else # className
+      regex = new RegExp "\b#{cl}\b", 'i'
+      switch act
+        when 'contains'
+          return regex.test el.className
+        when 'remove'
+          el.className = el.className.replace regex, ''
+        when 'add'
+          el.className += " #{cl}" unless regex.test el.className
+    @
+  @addcls: (el, cl) -> @cls 'add', el, cl
+  @rmcls: (el, cl) -> @cls 'remove', el, cl
+  @hascls: (el, cl) -> @cls 'contains', el, cl
+  
+  # dom events
   on: (event, {els, el, handler, bind}) -> # els or el
     throw 'need event name' unless event
     # for (event, ..., handler)

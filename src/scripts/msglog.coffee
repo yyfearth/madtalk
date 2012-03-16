@@ -33,7 +33,7 @@ class MsgLog extends View
       return if msg.rendered # is msg.ts for modifies
       # todo: renderer
       li = document.createElement 'li'
-      li.className = 'log ' + (msg.class or 'message') # default is message
+      li.className = 'log unread' + (msg.class or 'message') # default is message
       li.className += ' ' + msg.type if msg.type
       nick = if msg.user?.nick then @xss.str msg.user.nick else ''
       ts = new Date(msg.ts or new Date).getShortTimeString no
