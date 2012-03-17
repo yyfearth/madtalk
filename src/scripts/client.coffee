@@ -56,18 +56,18 @@ listeners =
   # afterleave: ->
     #todo: leave and logout
 
-channel.listeners.connected = -> #$ -> # dom ready
-    # EP
-    app.init()
+channel.bind 'connected', -> #$ -> # dom ready
+  # EP
+  app.init()
 
-    channel.listeners.logined = ->
-      app.chat.init().show()
-      app.chat.panel.status.update().online on
-      # listen to msg after login
-      channel.listeners[k] = v for k, v of listeners
-      return
+  channel.bind 'logined', ->
+    channel.bind listeners
 
-    # channel.listeners.loginfailed = (err) ->
-      # alerts already handled by login
-
+    app.chat.init().show()
+    app.chat.panel.status.update().online on
     return
+
+  # channel.listeners.loginfailed = (err) ->
+    # alerts already handled by login
+
+  return

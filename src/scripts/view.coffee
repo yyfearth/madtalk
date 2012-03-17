@@ -220,7 +220,7 @@ class View # view controller base class
     (evts = @_events?[event])?.splice? evts.indexOf(fct), 1
     @
   trigger: (event, args...) ->
-    return false if false is @_events?[event]?.every? (fct) => fct.apply @, args
+    return false if false is @_events?[event]?.every? (fct) => false isnt fct.apply @, args
     @
   # end of custom events
 
