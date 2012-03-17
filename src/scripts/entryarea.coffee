@@ -68,7 +68,14 @@ class EntryArea extends View
     @el.selectionStart = @el.selectionEnd = s + data.length
   # enter / up / down
   _trvl_history: (e, up = yes) =>
-    return if @history.cur < 0 and @value or /\n/.test @value
+    return if @history.cur < 0 and @value # or (/\n/.test @value)
+    # test cur pos
+    i = @el.selectionStart
+    v = @el.value
+    unless up and i is 0 or not up and i is v.length - 1
+      t = if up then v.slice 0, i else v.slice i
+      return if /\n/.test t
+    # end of test
     e.preventDefault()
     cur = @history.cur + if up then 1 else -1
     # console.log 'history', cur
