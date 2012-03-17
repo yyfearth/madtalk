@@ -154,6 +154,7 @@ class Channel
 
   dump: -> localStorage["channel_dump_#{@id.slice 1}"] = JSON.stringify @records
 
+  timeout: 10000 # 10s
   ### send message
   @param msg {object} messsage data {data: 'xxx', type: 'text|gfm|md|...'}
   @param callback {function} server boardcase successful, function (bool ok)
@@ -162,12 +163,17 @@ class Channel
     throw 'not logined' unless @logined
     throw 'invalid msg data' unless msg?.data
     msg.type ?= ''
+    _callback = null
     #msg.user = @user server will discard this
     if typeof callback is 'function'
-      callback = (ok) -> callback ok
-    else
-      callback = null
-    @emit 'message', msg, callback
+      _t = setTimeout ->
+        callback false # timeout
+      , @timeout
+      _callback = (ok) ->
+        clearTimeout _t
+        callback ok is yes
+
+    @emit 'message', msg, _callback
     # todo: add event here
     @
   # end of msg

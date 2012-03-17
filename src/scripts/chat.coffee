@@ -29,7 +29,7 @@ class Chat extends View
     @msglog.init()
     @panel.init()
     @panel.bind 'resized', =>
-      console.log 'resized'
+      # console.log 'resized - reflow'
       @msglog.bottom = @panel.height + 1 # log resize
       return
     @activate on # default on

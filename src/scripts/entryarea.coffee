@@ -55,7 +55,7 @@ class EntryArea extends View
   _insertText: (data = '') ->
     data = data.toString()
     if data.length + @el.value.length > @el.maxLength # maxlength
-      console.log 'length', data.length, @el.value.length, @el.maxLength
+      # console.log 'length', data.length, @el.value.length, @el.maxLength
       @channel.system 'The content exceed the max length.' 
       return
     s = @el.selectionStart
@@ -140,7 +140,7 @@ class EntryArea extends View
     if (_history = sessionStorage.history)
       try
         _history = JSON.parse _history
-        console.log _history
+        # console.log _history
         _history = [''] unless (Array.isArray _history) and _history.length > 0
       catch error
         _history = ['']
@@ -155,7 +155,9 @@ class EntryArea extends View
   # end of init
   ### public ###
   send: (txt = @value) ->
-    channel.msg (msg = type: @mode.type, data: txt) # todo: type
+    msg = type: @mode.type, data: txt # todo: type
+    channel.msg msg, (ok) => unless ok
+      @channel.system "Send message timeout, this message may be lost:> #{msg.data}"
     # console.log @history[0].trim(), (@history.length < 2 or @history[0] isnt @history[1]), @history
     @history[0] = @value
     @history.cur = 0
