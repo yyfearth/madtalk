@@ -379,6 +379,7 @@ var Markdown = {};
 			// These are all the transformations that form block-level
 			// tags like paragraphs, headers, and list items.
 			//
+			if (opt.code_lang) text = _DoCodeBlocksPre(text);
 			text = _DoHeaders(text);
 
 			// Do Horizontal Rules:
@@ -912,6 +913,24 @@ var Markdown = {};
 			return list_str;
 		}
 
+		function _DoCodeBlocksPre(text) {
+			//
+			//  For ``` code block gfm
+			//  Process Markdown `<pre><code>` blocks.
+
+			// add by Wilson : /(`{3})(\w*?)\n((?:.*?\n)+?)\1(?!`)/g
+			text = text.replace(/(?:\n|^)(```)((?:(?!\n)[\-\w])*)(\n(?:(?!```)[\s\S])*)\n```(?!`)/g,
+				function (wholeMatch, m1, m2, m3) {
+					var cls = m2, codeblock = m3;
+					if (cls) cls = '\xff' + cls + '\xff'; // pass class to the next proc
+					codeblock = codeblock.replace(/^/mg, '\t').trim('\n');
+					return "\n\n\t" + cls + codeblock + "\n\n";
+				}
+			);
+
+			return text;
+		}
+
 		function _DoCodeBlocks(text) {
 			//
 			//  Process Markdown `<pre><code>` blocks.
@@ -934,37 +953,25 @@ var Markdown = {};
 			text += "~0";
 
 			text = text.replace(/(?:\n\n|^)((?:(?:[ ]{4}|\t).*\n+)+)(\n*[ ]{0,3}[^ \t\n]|(?=~0))/g,
-				function (wholeMatch, m1, m2) {
+				function (wholeMatch, m1,  m2) {
 					var codeblock = m1;
 					var nextChar = m2;
+					var cls = ''
+
+					// add by Wilson
+					if (opt.code_lang) codeblock = codeblock.replace(/\xff([\-\w]*)\xff/, function (w, c) {
+						cls = ' class="' + c + '"';
+						return '';
+					});
 
 					codeblock = _EncodeCode(_Outdent(codeblock));
 					codeblock = _Detab(codeblock);
-					codeblock = codeblock.replace(/^\n+/g, ""); // trim leading newlines
-					codeblock = codeblock.replace(/\n+$/g, ""); // trim trailing whitespace
-
-					codeblock = "<pre><code>" + codeblock + "\n</code></pre>";
+					// use trim instead
+					// codeblock = codeblock.replace(/^\n+/g, ""); // trim leading newlines
+					// codeblock = codeblock.replace(/\n+$/g, ""); // trim trailing whitespace
+					codeblock = "<pre><code" + cls + ">" + codeblock.trim('\n') + "\n</code></pre>";
 
 					return "\n\n" + codeblock + "\n\n" + nextChar;
-				}
-			);
-
-			// add by Wilson
-			if (opt.code_lang) text = text.replace(/(`{3})(\w*?)\n((?:.*?\n)+?)\1(?!`)/g,
-				function (wholeMatch, m1, m2, m3) {
-					var cls = m2, codeblock = m3;
-					// console.log('test', wholeMatch, cls, codeblock);
-
-					codeblock = _EncodeCode(codeblock);
-					codeblock = _Detab(codeblock);
-					codeblock = codeblock.replace(/^\n+/g, ""); // trim leading newlines
-					codeblock = codeblock.replace(/\n+$/g, ""); // trim trailing whitespace
-
-					cls = cls ? ' class="' + cls +'"' : ''
-
-					codeblock = "<pre><code" + cls + ">" + codeblock + "</code></pre>";
-					// console.log(codeblock);
-					return "\n\n" + codeblock + "\n\n";
 				}
 			);
 
@@ -1025,16 +1032,6 @@ var Markdown = {};
 					c = c.replace(/[ \t]*$/g, ""); // trailing whitespace
 					c = _EncodeCode(c);
 					c = c.replace(/:\/\//g, "~P"); // to prevent auto-linking. Not necessary in code *blocks*, but in code spans. Will be converted back after the auto-linker runs.
-					// if (opt.code_lang && /\n/.test(text) && m2 == '```') { // add by Wilson
-					// 	mt = wholeMatch.match(/^```(\w{2,15})?\n/);
-					// 	cls = ''
-					// 	if (mt && mt[1]) {
-					// 		cls = ' class="' + mt[1] + '"';
-					// 		// c = c.slice(mt[1].length + 1);
-					// 	}
-					// 	console.log('test', cls);
-					// 	return m1 + "<pre><code" + cls + ">" + c + "</code></pre>";
-					// }
 					return m1 + "<code>" + c + "</code>";
 				}
 			);
