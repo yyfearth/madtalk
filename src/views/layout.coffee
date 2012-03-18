@@ -7,13 +7,15 @@ html ->
     meta(name: 'description', content: @description) if @description?
     link(rel: 'canonical', href: @canonical) if @canonical?
 
+    meta(name:'viewport', content:'width=device-width, height=device-height, initial-scale=1, user-scalable=no')
+    meta(name:'apple-mobile-web-app-capable', content:'yes')
+
     if @dev
       style @css
     else
       link rel: 'icon', href: '/favicon.ico'
       link rel: 'stylesheet', href: '/client.css'
       #script src: '/socket.io/socket.io.js', defer: on
-      script src: 'client.js', defer: on
     
     # coffeescript -> $ -> alert 'hi!'
 
@@ -24,7 +26,3 @@ html ->
 
     # footer ->
       # p -> a href: '/privacy', -> 'Privacy Policy'
-    
-    if @dev
-      # script src: '/socket.io/socket.io+websocket.js'
-      script @js # client.js
