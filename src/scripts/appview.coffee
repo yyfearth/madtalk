@@ -17,8 +17,22 @@ class AppView extends View
   ### public ###
   init: ->
     super()
-    if localStorage.transition isnt 'off' # tmp
-      document.documentElement.className += 'transition'
+    _trans = localStorage.transition
+    if _trans isnt 'off' # tmp
+      el = document.documentElement
+      el.className += ' transition'
+      el.className += ' fast' if _trans is 'fast' # tmp
+    # document.body.onresize = =>
+    #   if @height isnt (h = window.innerHeight)
+    #     console.log h, @height
+    #     alert 'resize ' + h
+    #     @el.style.height = h + 'px'
+    #   return
+    # document.addEventListener 'touchmove', (e) ->
+    #   if e.target is document.body
+    #     e.preventDefault()
+    #     false
+    # , false
     # init views
     @login.init()
     # @chat.init() # chat init after login
