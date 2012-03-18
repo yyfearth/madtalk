@@ -40,7 +40,7 @@ class Channel
   # end of init
   _load_user: -> 
     try
-      user = sessionStorage.user
+      user = sessionStorage.user or localStorage["channel-#{@id[1..]}-user"]
       if user
         user = JSON.parse user
         throw 'bad user session data' unless user?.nick
@@ -51,11 +51,15 @@ class Channel
       user = null
     @user = user
     return
-  _save_user: ->
-    sessionStorage.user = JSON.stringify @user if @user?.nick
+  _save_user: -> if @user?.nick
+    sessionStorage.user = JSON.stringify @user
+    localStorage["channel-#{@id[1..]}-user"] = JSON.stringify
+      nick: @user.nick
+      # _ts: new Date().getTime()
     return
   _clear_user: ->
     delete sessionStorage.user
+    delete localStorage["channel-#{@id[1..]}-user"]
     return
 
   # # helper
