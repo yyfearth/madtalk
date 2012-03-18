@@ -11,6 +11,11 @@ io.enable 'browser client gzip'
 io.set 'browser client handler', (req, res) ->
 ###
 # dev setting
+io.set 'browser client handler', (req, res) ->
+  # console.log req
+  res.writeHead 404
+  res.end 'resource not found'
+  return
 io.set 'log level', 2
 io.set 'transports', [
   'websocket'

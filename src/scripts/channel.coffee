@@ -6,7 +6,6 @@ import 'lib/socket.io+websocket.js'
 class Channel
   #! please use Channel.create instead of new Channel
   constructor: (@id, @io, @user) ->
-
     # auto bind listeners
     @bind @listeners
 
@@ -17,8 +16,8 @@ class Channel
   ### static ###
   @create: ({id, io, user}) ->
     throw 'cannot init without id or io' unless id? and io
-    # normalize id to '/xxxxx'
-    id = '/' + id unless /^\//.test id
+    # normalize id from '/xxxxx' to 'xxxxx'
+    id = id[1..] if id[0] is '/'
     id = id.toLowerCase()
     channel = new @ id, io, (user or null)
   # end of static create
@@ -40,7 +39,7 @@ class Channel
   # end of init
   _load_user: -> 
     try
-      user = sessionStorage.user or localStorage["channel-#{@id[1..]}-user"]
+      user = sessionStorage.user or localStorage["channel-#{@id}-user"]
       if user
         user = JSON.parse user
         throw 'bad user session data' unless user?.nick
@@ -53,13 +52,13 @@ class Channel
     return
   _save_user: -> if @user?.nick
     sessionStorage.user = JSON.stringify @user
-    localStorage["channel-#{@id[1..]}-user"] = JSON.stringify
+    localStorage["channel-#{@id}-user"] = JSON.stringify
       nick: @user.nick
       # _ts: new Date().getTime()
     return
   _clear_user: ->
     delete sessionStorage.user
-    delete localStorage["channel-#{@id[1..]}-user"]
+    delete localStorage["channel-#{@id}-user"]
     return
 
   # # helper
@@ -122,10 +121,11 @@ class Channel
     @
 
   ### methods ###
-
+  base: '/' # 'http://madtalk.yyfearth.com:8008/'
   connect: -> # start connect, auto start when init
-    console.log 'connect', @id
-    @socket = io.connect @id # connect to server
+    url = @base + @id
+    console.log 'connect', url
+    @socket = io.connect url # connect to server
     # bind fns to client.io ! JS 1.8.5
     @on = @socket.on.bind @socket
     @emit = @socket.emit.bind @socket
@@ -176,7 +176,7 @@ class Channel
     @
   # end of record
 
-  dump: -> localStorage["channel_dump_#{@id.slice 1}"] = JSON.stringify @records
+  dump: -> localStorage["channel_dump_#{@id}"] = JSON.stringify @records
 
   timeout: 10000 # 10s
   ### send message

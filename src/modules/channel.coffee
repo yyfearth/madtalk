@@ -17,8 +17,8 @@ class Channel
     # default args
     id ?= @channels.length
     io ?= @io or throw 'no socket.io specified'
-    # normalize id to '/xxxxx'
-    id = '/' + id unless /^\//.test id
+    # normalize id from '/xxxxx' to 'xxxxx'
+    id = id[1..] if id[0] is '/'
     throw 'id #{id} should be consist of 0-9,A-Z,a-z,_,-' unless @ID_REGEX.test id
     id = id.toLowerCase()
     # return exist channel
@@ -41,7 +41,7 @@ class Channel
     @records.index = {} # indexed by ts
     @users = []
     @users.index = {} # indexed by nick and sid
-    @clients = @io.of @id
+    @clients = @io.of '/' + @id
     @clients.channel = @
     # Object.defineProperties @,
       # creator/admin
