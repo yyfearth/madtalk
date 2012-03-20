@@ -4,12 +4,6 @@
 express = require 'express'
 app = express.createServer()
 io = require('socket.io').listen app
-### for production
-io.enable 'browser client etag'
-io.enable 'browser client minification'
-io.enable 'browser client gzip'
-io.set 'browser client handler', (req, res) ->
-###
 # dev setting
 io.set 'browser client handler', (req, res) ->
   # console.log req
@@ -22,10 +16,8 @@ io.set 'transports', [
 ]
 # for compile
 fs = require 'fs'
-stylus = require 'stylus'
-#nib = require 'nib'
-xcoffee = require 'extra-coffee-script'
 # modules
+build = require './modules/build'
 {Channel} = require './modules/channel'
 
 port = 8008
@@ -59,18 +51,18 @@ app.get '/', (req, res) ->
   res.redirect '/' + str_id
 
 compile_stylus = (callback) ->
-  stylus.render '@import "client"', 
-    #filename: __dirname + '/styles/client.stylus'
+  build.stylus __dirname + '/styles/client.styl'
     paths: [__dirname + '/styles/']
-    compress: on
-  , (err, css) ->
-    throw err if err
-    callback css
+    callback
+    # compress: 'min'
 
-compile_coffee = ->
-  xcoffee.compile 'import "client"',
-    filename: __dirname + '/scripts/client.coffee'
-    imports: on
+compile_coffee = -> # sync
+  build.coffee __dirname + '/scripts/client.coffee'
+    # minify: on
+# compile_coffee = (callback) -> # async
+#   build.coffee
+#     filename: __dirname + '/scripts/client.coffee'
+#     callback
 
 app.get /^\/[^\/]+\/$/, (req, res) -> # /id/ -> /id
   res.redirect req.url[0...-1], 301
