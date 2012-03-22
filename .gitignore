@@ -31,3 +31,5 @@ Desktop.ini
 /src/*/*.js
 !/src/scripts/lib/*.js
 /src/styles/*.css
+
+/server/

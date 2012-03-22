@@ -11,6 +11,8 @@ stylus = require 'stylus'
 {cssmin} = require 'cssmin'
 #nib = require 'nib'
 
+header = 'madtalk'
+
 mkdir = (dir, callback) ->
   relative = path.relative __dirname, dir
   return unless relative
@@ -152,6 +154,7 @@ _coffee = (filename, {minify, callback} = {}) ->
   opt =
     filename: path.resolve filename
     imports: on
+    # header: header
     minify: minify ? off
   if callback? # async (callback is not func means no callback)
     async.nextTick -> callback? xcoffee.compile code, opt
