@@ -60,11 +60,11 @@ class App
     if req.url is '/'
       # root
       console.log 'A client has requested this route.'
-      id = new Date().getTime().toString 36
-      id++ while Channel.has id
-      res.redirect '/' + id
-    else if /^\/.+?\/$/.test req.url
-      # channel end with /
+      id = new Date().getTime()
+      id++ while Channel.has (str_id = id.toString 36)
+      res.redirect '/' + str_id
+    else req.url.length > 1 and req.url[-1..] is '/'
+      # end with /
       res.redirect req.url[0...-1], 301
     else if Channel.ID_REGEX.test req.url
       # channel
