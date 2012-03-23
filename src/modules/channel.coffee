@@ -11,15 +11,15 @@ class Channel
     @init()
 
   ### static ###
-  @ID_REGEX: /^\/[\w\-]+$/ # '.' is not allowed
+  @ID_REGEX: /^\/?[\w\-]+$/ # '.' is not allowed
   @channels: []
   @create: ({id, io}) ->
     # default args
     id ?= @channels.length
     io ?= @io or throw 'no socket.io specified'
     # normalize id from '/xxxxx' to 'xxxxx'
+    throw id "#{id} should be consist of 0-9,A-Z,a-z,_,-" unless @ID_REGEX.test id
     id = id[1..] if id[0] is '/'
-    throw 'id #{id} should be consist of 0-9,A-Z,a-z,_,-' unless @ID_REGEX.test id
     id = id.toLowerCase()
     # return exist channel
     return @channels.index[id] if @channels.index[id]?

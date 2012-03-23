@@ -33,7 +33,7 @@ xss_safe = # by Wilson Young under MIT License
     #.replace /\\./, '' todo: \b \n
     if not noesc
       str = str.replace @esc_regex, (ch) =>
-        ch = ch.slice 1 # remove ^\
+        ch = ch[1..] # remove ^\
         if @esc_dict[ch]?
           @esc_dict[ch]
         else

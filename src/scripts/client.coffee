@@ -23,7 +23,7 @@ listeners =
     if channel.title
       document.title = "Channel #{channel.title} - MadTalk"
     else
-      document.title = "A New Channel #{channel.id[1..]} - MadTalk"
+      document.title = "A New Channel #{channel.id} - MadTalk"
     # doto: show title and creator in header?
    
     app.chat.panel.status.update()

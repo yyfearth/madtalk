@@ -71,6 +71,7 @@ app.get Channel.ID_REGEX, (req, res) -> # '.' is not allowed
   return unless chk_ua req, res
   # create channel
   id = req.url
+  # console.log id
   Channel.create {id, io} unless Channel.has id
   # compile
   o = dev: yes

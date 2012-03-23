@@ -4,7 +4,6 @@ path = require 'path'
 util = require 'util'
 build = require './src/modules/build'
 async = build.async
-# fileIO = require './fileIO'
 
 _base_ext = (filepath, from, to) -> (path.basename filepath, from) + to
 _src_path = (f...) -> path.resolve __dirname, 'src', f...
