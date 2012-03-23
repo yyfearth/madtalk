@@ -85,83 +85,30 @@ rmdir = (dir, callback) ->
   return
 # end of rmdir
 
-cpfile = (from, to, callback) -> # from, to must be filename not dirname
-  if callback? # async (callback is not func means no callback)
-    from = fs.createWriteStream from
-    to = fs.createReadStream to
-    to.once 'open', (fd) ->
-      util.pump from, to
-      callback?()
-  else
-    # @makeDirSync path.dirname targetFile
-    fs.writeFileSync to, fs.readFileSync from
-    # log "Copy <#{sourceFile}> to <#{targetFile}>"
-    # with buffer
-    # BUF_LENGTH = 64*1024
-    # buff = new Buffer BUF_LENGTH
-    # fdr = fs.openSync srcFile, 'r'
-    # fdw = fs.openSync destFile, 'w'
-    # bytesRead = 1
-    # pos = 0
-    # while bytesRead > 0
-    #   bytesRead = fs.readSync fdr, buff, 0, BUF_LENGTH, pos
-    #   fs.writeSync fdw,buff,0,bytesRead
-    #   pos += bytesRead
-    # fs.closeSync fdr
-    # fs.closeSync fdw
-  return
-# end of copy
-
-cpdir = (from, to, callback) ->
+cpdirgz = (from, to, callback) ->
   # do not copy sub dirs for now
-  if callback? # async (callback is not func means no callback)
-    fs.readdir from, (err, files) ->
-      throw err if err
-      async.forEach files, (name, callback) ->
-        src = path.join from, name
-        des = path.join to, name
-        fs.stat src, (err, stats) ->
-          cpfile src, des, callback unless stats.isDirectory()
-          return
-      , -> callback?()
-  else # sync
-    files = fs.readdirSync from
-
-    for name in files
+  fs.readdir from, (err, files) ->
+    throw err if err
+    async.forEach files, (name, callback) ->
+      # console.log 'find', name
       src = path.join from, name
-      srcStats = fs.statSync src
-      des = path.join to, name
-
-      cpfile src, des unless srcStats.isDirectory()
+      fs.stat src, (err, stats) ->
+        if stats.isDirectory()
+          # console.log 'is dir', name
+          callback()
+        else
+          console.log 'copy file', name
+          fs.readFile src, 'binary', (err, data) ->
+            # console.log 'read', data.length
+            des = path.join to, name
+            write des, data,
+              encoding: 'binary'
+              withgz: on
+              callback: callback
+        return
+    , -> callback?()
   return
-# cpdir = (from, to, callback) ->
-#   if callback? # async (callback is not func means no callback)
-#     fs.readdir (err, files) ->
-#       throw err if err
-#       for name in files
-#         src = path.join from, name
-#         des = path.join to, name
-#         srcStats = fs.statSync src
-#         # temp use sync for sub items
-#         if srcStats.isDirectory()
-#           cpdir src, des#, true
-#         else
-#           cpfile src, des#, true
-#       callback?()
-#   else # sync
-#     files = fs.readdirSync sourceDir
-
-#     for name in files
-#       src = path.join from, name
-#       srcStats = fs.to src
-#       des = path.join targetDir, name
-
-#       if srcStats.isDirectory()
-#         cpdir src, des
-#       else
-#         cpfile src, des
-#   return
-# end of cpdir
+# end of cpdirgz
 
 write = (filename, data, {encoding, withgz, callback} = {}) ->
   throw 'need filename and data' unless filename and data
@@ -173,6 +120,7 @@ write = (filename, data, {encoding, withgz, callback} = {}) ->
     data = "#{data}<!-- #{header} -->\n"
   else
     data += '\n'
+  # default encoding is urf-8
   if callback? # async (callback is not func means no callback)
     fs.writeFile filename, data, encoding, (err) ->
       callback? err
@@ -250,11 +198,10 @@ _stylus = (filename, {compress, paths, callback} = {}) ->
 
 module.exports = {
   async
-  cpfile
-  cpdir
   mkdir
   rmdir
   write
+  cpdirgz
   coffee: _coffee
   coffeekup: _coffeekup
   stylus: _stylus
