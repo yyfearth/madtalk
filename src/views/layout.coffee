@@ -14,7 +14,7 @@ html ->
       style @css
     else
       link rel: 'icon', href: '/favicon.ico'
-      link rel: 'stylesheet', href: '/client.css'
+      link rel: 'stylesheet', href: "/client.css?#{@ts}"
       #script src: '/socket.io/socket.io.js', defer: on
     
     # coffeescript -> $ -> alert 'hi!'

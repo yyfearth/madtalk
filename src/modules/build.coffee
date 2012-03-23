@@ -11,27 +11,30 @@ stylus = require 'stylus'
 {cssmin} = require 'cssmin'
 #nib = require 'nib'
 
-header = 'madtalk'
+header = 'madtalk - yyfearth.com/myyapps.com'
 
 mkdir = (dir, callback) ->
-  relative = path.relative __dirname, dir
-  return unless relative
-  relative = relative.split /[\\\/]/
-  base = [__dirname]
-  base.push relative.shift() while relative[0] is '..'
-  base = path.resolve.apply path, base
-  # console.log 'mkdir', base, relative
+  # console.log 'mkdir', base, _rel
   if callback? # async
-    do md = (relative, callback) ->
-      if (r = relative.shift())
-        base = path.join base, r
-        path.exists base, (exists) -> unless exists
-          fs.mkdir base, ->
-            md relative, callback
-      else
-        callback? null
+    dir = dir.resolve dir
+    exec "mkdir -p \"#{path}\"", (err, stdout, stderr) ->
+      callback stderr if stderr
+      console.log err if err
+      unless err
+        callback?()
+        return
+      # fallback use sync
+      # mkdir dir
+      # callback?()
+      throw 'err'
   else
-    while (r = relative.shift())
+    _rel = path.relative __dirname, dir
+    return unless _rel
+    _rel = _rel.split /[\\\/]/
+    base = [__dirname]
+    base.push _rel.shift() while _rel[0] is '..'
+    base = path.resolve.apply path, base
+    while (r = _rel.shift())
       base = path.join base, r
       fs.mkdirSync base unless path.existsSync base
   return
@@ -39,17 +42,21 @@ mkdir = (dir, callback) ->
 
 rmdir = (dir, callback) ->
   if callback? # async
-    path.exists dir, (exists) -> if exists
+    path.exists dir, (exists) ->
+      unless exists
+        callback?()
+        return
       fs.stat dir, (err, stat) ->
-      if err then callback err
-      unless stat.isDirectory() then callback "Path <#{dir}> is not a directory"
-      path = path.resolve dir
-      exec "rm -rf \"#{path}\"", (err, stdout, stderr) ->
-        callback stderr if stderr
-        unless err
-          callback?()
-          return
-        rmdir dir # fallback
+        if err then callback err
+        unless stat.isDirectory() then callback "Path <#{dir}> is not a directory"
+        dir = path.resolve dir
+        console.log 'rm -rf:', dir
+        exec "rm -rf \"#{dir}\"", (err, stdout, stderr) ->
+          callback stderr if stderr
+          unless err
+            callback?()
+            return
+          rmdir dir # fallback
   else # sync
     unless path.existsSync dir
       # console.log 'Directory <#{dir}> does not exist'
@@ -87,7 +94,7 @@ cpfile = (from, to, callback) -> # from, to must be filename not dirname
       callback?()
   else
     # @makeDirSync path.dirname targetFile
-    fs.writeFileSync targetFile, fs.readFileSync sourceFile
+    fs.writeFileSync to, fs.readFileSync from
     # log "Copy <#{sourceFile}> to <#{targetFile}>"
     # with buffer
     # BUF_LENGTH = 64*1024
@@ -106,44 +113,73 @@ cpfile = (from, to, callback) -> # from, to must be filename not dirname
 # end of copy
 
 cpdir = (from, to, callback) ->
+  # do not copy sub dirs for now
   if callback? # async (callback is not func means no callback)
-    fs.readdir (err, files) ->
+    fs.readdir from, (err, files) ->
       throw err if err
-      for name in files
-        src = path.join sourceDir, name
-        des = path.join targetDir, name
-        srcStats = fs.statSync src
-        # temp use sync for sub items
-        if srcStats.isDirectory()
-          cpdir src, des#, true
-        else
-          cpfile src, des#, true
-      callback?()
+      async.forEach files, (name, callback) ->
+        src = path.join from, name
+        des = path.join to, name
+        fs.stat src, (err, stats) ->
+          cpfile src, des, callback unless stats.isDirectory()
+          return
+      , -> callback?()
   else # sync
-    files = fs.readdirSync sourceDir
+    files = fs.readdirSync from
 
     for name in files
-      src = path.join sourceDir, name
+      src = path.join from, name
       srcStats = fs.statSync src
-      des = path.join targetDir, name
+      des = path.join to, name
 
-      if srcStats.isDirectory()
-        cpdir src, des
-      else
-        cpfile src, des
+      cpfile src, des unless srcStats.isDirectory()
   return
+# cpdir = (from, to, callback) ->
+#   if callback? # async (callback is not func means no callback)
+#     fs.readdir (err, files) ->
+#       throw err if err
+#       for name in files
+#         src = path.join from, name
+#         des = path.join to, name
+#         srcStats = fs.statSync src
+#         # temp use sync for sub items
+#         if srcStats.isDirectory()
+#           cpdir src, des#, true
+#         else
+#           cpfile src, des#, true
+#       callback?()
+#   else # sync
+#     files = fs.readdirSync sourceDir
+
+#     for name in files
+#       src = path.join from, name
+#       srcStats = fs.to src
+#       des = path.join targetDir, name
+
+#       if srcStats.isDirectory()
+#         cpdir src, des
+#       else
+#         cpfile src, des
+#   return
 # end of cpdir
 
 write = (filename, data, {encoding, withgz, callback} = {}) ->
   throw 'need filename and data' unless filename and data
   callback = cb if not callback? and typeof (cb = arguments[arguments.length - 1]) is 'function'
+  ext = (path.extname filename)[1..].toLowerCase()
+  if /^(?:j|cs)s$/.test ext
+    data = "/*! #{header} */#{data}\n"
+  else if /^html?$/.test ext
+    data = "#{data}<!-- #{header} -->\n"
+  else
+    data += '\n'
   if callback? # async (callback is not func means no callback)
     fs.writeFile filename, data, encoding, (err) ->
       callback? err
-    if withgz then fs.writeFile filename + '.gz', (gzip new Buffer data, 9), 'binary'
+    if withgz then fs.writeFile filename + '.gz', (gzip (new Buffer data), 9), 'binary'
   else
     fs.writeFileSync filename, data, encoding
-    if withgz then fs.writeFileSync filename + '.gz', (gzip new Buffer data, 9), 'binary'
+    if withgz then fs.writeFileSync filename + '.gz', (gzip (new Buffer data), 9), 'binary'
   return
 # end of write
 
@@ -162,6 +198,39 @@ _coffee = (filename, {minify, callback} = {}) ->
   else
     xcoffee.compile code, opt
 # end of build coffee
+_coffeekup = (filename, options = {}, callback) ->
+  throw 'need filename' unless filename
+  callback = cb if not callback? and typeof (cb = options.callback) is 'function'
+  basedir = (path.join (path.dirname filename), '_')[0...-1]
+  options.partial ?= (name) ->
+    data = fs.readFileSync basedir + name + '.coffee', 'utf-8'
+    coffeekup.render data, options
+  options.hardcode ?= {}
+  options.hardcode.partial = (view) -> text @partial view
+  # end of hardcode partial
+  if callback? # async (callback is not func means no callback)
+    do (filename, basedir, options) ->
+      _layout = _body = null
+      _parallel = (layout, body) ->
+        _layout ?= layout
+        _body ?= body
+        if _layout and _body
+          options.body = _body
+          callback? coffeekup.render _layout, options
+      fs.readFile basedir + 'layout.coffee', 'utf-8', (err, data) ->
+        throw err if err
+        _parallel data
+      fs.readFile filename, 'utf-8', (err, body) ->
+        throw err if err
+        _parallel null, coffeekup.render body, options
+    return
+  else
+    layout = fs.readFileSync basedir + 'layout.coffee', 'utf-8'
+    body = fs.readFileSync filename, 'utf-8'
+    options.ts ?= new Date().getTime()
+    options.body = coffeekup.render body, options
+    coffeekup.render layout, options
+# end of coffeekup
 _stylus = (filename, {compress, paths, callback} = {}) ->
   callback = cb if not callback? and typeof (cb = arguments[arguments.length - 1]) is 'function'
   throw 'need filename and callback' unless filename and typeof callback is 'function'
@@ -187,5 +256,6 @@ module.exports = {
   rmdir
   write
   coffee: _coffee
+  coffeekup: _coffeekup
   stylus: _stylus
 }
