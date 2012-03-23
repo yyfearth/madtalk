@@ -17,8 +17,8 @@ class Channel
     # default args
     id ?= @channels.length
     io ?= @io or throw 'no socket.io specified'
-    # normalize id to '/xxxxx'
-    id = '/' + id unless /^\//.test id
+    # normalize id from '/xxxxx' to 'xxxxx'
+    id = id[1..] if id[0] is '/'
     throw 'id #{id} should be consist of 0-9,A-Z,a-z,_,-' unless @ID_REGEX.test id
     id = id.toLowerCase()
     # return exist channel
@@ -41,7 +41,7 @@ class Channel
     @records.index = {} # indexed by ts
     @users = []
     @users.index = {} # indexed by nick and sid
-    @clients = @io.of @id
+    @clients = @io.of '/' + @id
     @clients.channel = @
     # Object.defineProperties @,
       # creator/admin
@@ -54,6 +54,27 @@ class Channel
     @
   # end of init
 
+  # # helper
+  # wait: (t = 0, fn) ->
+  #   if typeof t is 'function'
+  #     [t, fn] = [fn or 0, t]
+  #   t = if t < 0 then 0 else t >>> 0
+  #   fn = fn.bind @
+  #   setTimeout fn, t # return
+  # # end of wait
+
+  # # custom events
+  # bind: (event, fct) ->
+  #   ((@_events ?= {})[event] ?= []).push fct
+  #   @
+  # unbind: (event, fct) ->
+  #   (evts = @_events?[event])?.splice? evts.indexOf(fct), 1
+  #   @
+  # trigger: (event, args...) ->
+  #   return false if false is @_events?[event]?.every? (fct) => fct.apply @, args
+  #   @
+  # # end of custom events
+
   listen: -> # start listening, auto start when init
     console.log 'start listening channel', @id
     @on 'connection', (client) =>
@@ -64,25 +85,26 @@ class Channel
         client.user = user
         try
           @validate client, (user) =>
+            # bind event handlers
+            @handle client
+            # send login callback
+            callback? user
+            # push sync req
+            @sync client
             # the 1st logined user is the creator
             unless @creator?
               user.creator = yes
               @creator = user
               console.log 'the creator', user.nick
+              # send msg after login callback
               @system client, "Welcome #{user.nick}! 
 You are the creator of this channel. 
 Your first valid message will be the title of the channel!"
             else if user.creator? and user isnt @creator 
               delete user.creator
-            # bind event handlers
-            @handle client
-            # send login callback
-            callback? user
-            # push sync
-            @sync client
         catch err
           console.error err
-          callback? err: err.message
+          callback? err: err
         return
       # todo: set timeout for login
       # todo: manage clients
@@ -128,8 +150,15 @@ Your first valid message will be the title of the channel!"
     # set status
     user.status = 'online'
     user.online = yes
+    console.log 'online', client.user.nick, client.user.online
     # broadcast one user connected
-    client.broadcast.emit 'online', user
+    client.broadcast.emit 'online',
+        nick: user.nick
+        #id: user.id
+        online: user.online
+        status: user.status
+        ts: new Date().getTime()
+    # end of brodcast
     @last = new Date().getTime() # last upt ts
     # listen and re-broadcast messages
     client.on 'message', (msg, callback) =>
@@ -138,7 +167,7 @@ Your first valid message will be the title of the channel!"
       @_title client, msg.data if not @title and user is @creator
       # msg
       msg.user = # limit user info
-        id: user.id
+        #id: user.id
         nick: user.nick
         # more?
       @msg msg
@@ -159,9 +188,16 @@ Your first valid message will be the title of the channel!"
       return
     # user offline
     client.on 'disconnect', ->
+      console.log 'offline', client.user.nick, client.user.online
+      return unless user.online
       user.status = 'offline'
       user.online = no
-      client.broadcast.emit 'offline', user
+      client.broadcast.emit 'offline',
+        nick: user.nick
+        #id: user.id
+        online: user.online
+        status: user.status
+        ts: new Date().getTime()
       return
     # user leave channel
     client.on 'leave', =>
@@ -177,7 +213,7 @@ Your first valid message will be the title of the channel!"
 
   _title: (client, title) -> # set title
     #console.log 'org msg for title', title
-    title = title.replace /[\x00-\x1f\n\r\t\s]+|(?:<[^><]{6,}>)/g, ' '
+    title = title.replace(/[\x00-\x1f\n\r\t\s]+|(?:<[^><]{6,}>)/g, ' ').trim()
     #console.log 'title after trim', title
     if title.length > 3
       title = title[0...29] + '\u2026' if title.length > 30 # add ...
@@ -193,7 +229,7 @@ Your first valid message will be the title of the channel!"
 
   msg: (msg) -> # broadcast message
     #todo: add a on message handler
-    msg.type ?= 'text'
+    msg.type ?= ''
     #todo: add msg filter
     # gen a uniq ts
     ts = new Date().getTime()
@@ -212,7 +248,6 @@ Your first valid message will be the title of the channel!"
   system: (client = @clients, msg) ->
     console.log 'system', msg
     client.emit 'system',
-      type: 'gfm'
       data: msg
       ts: new Date().getTime() # cur ts
 

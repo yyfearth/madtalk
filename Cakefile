@@ -4,25 +4,8 @@ path = require 'path'
 xcoffee = require 'extra-coffee-script'
 coffeekup = require 'coffeekup'
 stylus = require 'stylus'
-uglifyjs = require 'uglify-js'
 util = require 'util'
 fileIO = require './fileIO.coffee'
-
-minifyJs = (code, cb) ->
-  setTimeout(->
-    try
-      jsp = uglifyjs.parser
-      pro = uglifyjs.uglify
-
-      ast = jsp.parse code
-      ast = pro.ast_mangle ast
-      ast = pro.ast_squeeze ast
-      code = pro.gen_code ast
-    catch err
-      cb err
-
-    cb undefined, code
-  , 0)
 
 stylusToCss = (args, cb = ->) ->  
   console.log "Compiling <#{args.from}> to <#{args.to}>"
@@ -69,18 +52,12 @@ _coffeeToJs = (code, importBasefile, isMinified = false, cb) ->
       code = xcoffee.compile code,
         imports: isImport
         filename: importBasefile
+        minify: isMinified
     catch err
       cb err
 
-    if isMinified
-      minifyJs code, (err, code) ->
-        if err?
-          cb err
-          return
+    cb undefined, code
 
-        cb undefined, code
-    else
-      cb undefined, code
   , 0)
 
 oneCoffeeToJs = (args, cb = ->) ->

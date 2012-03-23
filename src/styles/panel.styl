@@ -1,32 +1,54 @@
 #panel
-  position fixed
-  color #fff
+  position absolute
   width 100%
+  top auto
   bottom 0
-  background #733
+  box-sizing(border-box)
   no-space()
-  //max-height 50%
-  //overflow hidden
-  ul
+  background rgba($bkg-color, 0.8)
+  opacity 0.99 // smooth font
+  //max-height 50% // by js
+  > ul // #status
+    color #fff
     no-space()
-    margin-left 1em
+    padding-left 1em
     list-style none
+    box-sizing(border-box)
+    box-shadow(0 -0.2em 1em rgba(#0005))
+    z-index 1001
+    background rgba(#7333)
     li
       display inline-block
       margin 0 2em 0 0
-  textarea
+      color #888
+  &:hover
+    > ul
+      background rgba(#7339)
+    > textarea
+      background-color rgba($bkg-color, 0.8)
+  > textarea
     display block
-    width 100%
     font-size inherit
-    padding 1em 1em 0 1em
+    font-family monospace
+    //font-family Consolas, Monaco, "Courier New", Courier, monospace
     border-width 0
     outline none
     clear both
     resize none
-    overflow hidden
-    overflow-y auto
-    background $bkg-color
+    width 100%
+    box-sizing(border-box)
+    margin 0
+    padding 1em
+    min-height 3em // inc padding
     color $font-color
+    z-index 1000
+    background-color rgba($bkg-color, 0.5)
+    &:focus
+      background-color $bkg-color
 
-  #users-list
-    color inherit
+.transition #panel
+  > ul
+    transition(background-color 0.3s ease-in-out)
+  > textarea
+    transition(background-color 0.15s linear)
+

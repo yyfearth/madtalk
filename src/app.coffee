@@ -1,81 +1,113 @@
-# madtalk app.coffee for dev use
+# madtalk app.coffee for production use
 
-# for server
-express = require 'express'
-app = express.createServer()
-io = require('socket.io').listen app
-### for production
-io.enable 'browser client etag'
-io.enable 'browser client minification'
-io.enable 'browser client gzip'
-io.set 'browser client handler', (req, res) ->
-###
-# dev setting
-io.set 'log level', 2
-io.set 'transports', [
-  'websocket'
-]
-# for compile
 fs = require 'fs'
-stylus = require 'stylus'
-#nib = require 'nib'
-xcoffee = require 'extra-coffee-script'
+path = require 'path'
+http = require 'http'
+
 # modules
-{Channel} = require './modules/channel'
+import './modules/channel'
 
-port = 8008
-
-app.configure ->
-  app.use express.static __dirname + '/public' # dev only
-  #app.use express.gzip()
-  app.set 'views', __dirname + '/views'
-  app.set 'view engine', 'coffee'
-  app.register '.coffee', require('coffeekup').adapters.express
-
-app.get '/', (req, res) ->
-  console.log 'A client has requested this route.'
-  id = new Date().getTime()
-  id++ while Channel.has id
-  res.redirect '/' + id
-
-app.get '/client.css', (req, res) ->
-  filename = __dirname + '/styles/client.styl'
-  fs.readFile filename, 'utf-8', (err, code) ->
+class App
+  @create: (port) -> new @ port
+  constructor: (@port = 8008) ->
+    @svr = http.createServer @routing.bind @
+    @io = require('socket.io').listen app.svr
+    @io.set 'browser client handler', (req, res) ->
+      # console.log req
+      res.writeHead 404
+      res.end 'resource not found'
+      return
+    @io.set 'log level', 1
+    @io.set 'transports', [
+      'websocket'
+    ]
+    # prepare static files
+    @prepare ->
+      @svr.listen @port
+      console.log "app listening on port #{@port} ..."
+      return
+  # end of constructor
+  files:
+    path: path.join __dirname, 'public'
+    regex: /^\/(#{favicon\.ico|client.(?:html|js|css)})(?:\?\d+)?$/ # no index.html
+    client: 'client.html'
+    'favicon.ico': 'image/x-icon'
+    'client.js'  : 'application/javascript'
+    'client.css' : 'text/css'
+    'client.html' : 'text/html'
+  prepare: (callback) ->
+    c = @cache = list: []
+    files = Object.getOwnPropertyNames @files
+    timeout = setTimeout ->
+      throw 'load files timeout'
+    , 30*1000 # 30s
+    files.forEach (f) => fs.readFile (path.join @files.path, f + '.gz'), 'binary', (err, data) =>
       throw err if err
-      # stylus(code)
-      # .set('filename', filename)
-      # .set('paths', [__dirname + '/styles/'])
-      # .set('compress', on)
-      # .use(nib())
-      # .render (err, css) ->
-      stylus.render code, 
-        filename: filename
-        paths: [__dirname + '/styles/']
-      , (err, css) ->
-        throw err if err
-        res.writeHead 200, 'Content-Type': 'text/css'
-        res.end css, 'utf-8'
-  #console.log 'stylus', css
+      c[f] =
+        name: f
+        content: data
+        mtime: 0 # todo: get mtime
+        type: @files[f]
+      c.list.push f
+      console.log 'load file to cache', f
+      if c.list.length is files.length
+        clearTimeout timeout
+        callback() 
+      return
+    return
+  routing: (req, res) ->
+    return unless @chkUA req, res
+    if req.url is '/'
+      # root
+      console.log 'A client has requested this route.'
+      id = new Date().getTime().toString 36
+      id++ while Channel.has id
+      res.redirect '/' + id
+    else if /^\/.+?\/$/.test req.url
+      # channel end with /
+      res.redirect req.url[0...-1], 301
+    else if Channel.ID_REGEX.test req.url
+      # channel
+      id = req.url
+      Channel.create {id, io} unless Channel.has id
+      @serve @file.client, res
+    else if files.regex.test req.url
+      # static files
+      file = req.url.match files.regex
+      @serve file[1], res
+    else
+      res.writeHead 404
+      res.end 'resource not found'
+    return
+  chkUA: (req, res) ->
+    ua = req.headers['user-agent']
+    if /MSIE [1-9]\./i.test ua
+      msg = 'This WebApp does not support IE below 10!'
+      false
+    else if /opera/i.test ua
+      msg = 'This WebApp does not support Opera!'
+      false
+    else if /^Mozilla\/4/i.test ua
+      msg = 'This WebApp does not support your browser! \nIt seems your browser is out of date.'
+      false
+    else
+      return true
+    # res.writeHead 200, 'Content-Type': 'text/plain'
+    res.end msg
+    return
+  serve: (file, res) ->
+    console.log 'serve file', file
+    data = @cache[file]
+    res.setHeader 'Content-Type', @files[file] # mime
+    res.setHeader 'Content-Encoding', 'gzip'
+    res.setHeader 'Vary', 'Accept-Encoding'
+    res.setHeader 'Content-Length', data.content.length
+    # res.setHeader 'Last-Modified', data.mtime.toUTCString()
+    res.setHeader 'Date', new Date().toUTCString()
+    # res.setHeader 'Expires', new Date(Date.now() + clientMaxAge).toUTCString()
+    # res.setHeader 'Cache-Control', 'public, max-age=' + (clientMaxAge / 1000)
+    # res.setHeader 'ETag', '"' + data.content.length + '-' + data.mtime >>> 0 + '"'
+    res.end data.content, 'binary'
+    return
 
-app.get '/client.js', (req, res) ->
-  filename = __dirname + '/scripts/client.coffee'
-  fs.readFile filename, 'utf-8', (err, code) ->
-    js = xcoffee.compile code, 
-      filename: filename
-      imports: on
-    res.writeHead 200, 'Content-Type': 'application/javascript'
-    res.end js, 'utf-8'
-  #console.log 'stylus', css
-
-app.get /^\/.+?\/$/, (req, res) -> # /id/ -> /id
-  res.redirect req.url[0...-1], 301
-
-app.get Channel.ID_REGEX, (req, res) -> # '.' is not allowed
-  # create channel
-  id = req.url
-  Channel.create {id, io} unless Channel.has id
-  # render index
-  res.render 'index', dev: yes
-
-app.listen port
-console.log "app listening on port #{port} ..."
+app = App.create()

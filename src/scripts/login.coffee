@@ -24,20 +24,24 @@ class Login extends View
     if @channel.user?.nick
       # auto login
       console.log 'auto login', @channel.user.nick
-      @login null
+      @login null, yes
     else
       console.log 'show login form'
       document.title = "Login - MadTalk"
       @show yes
     @
   # end of init
-  login: (user) ->
-    @channel.user = user if user?.nick
+
+  login: (user, is_auto) ->
+    @channel.user = user if user?.nick # if has input nick
     @channel.login (err) =>
       if err
-        alert 'login failed'
+        @show on
+        alert 'login failed!\n' + err if is_auto isnt yes
       else
         @show off
       return
     @
   # end of login
+
+View.reg Login # reg

@@ -1,61 +1,94 @@
 #msglog
-  padding 0.5em
-  padding-bottom 10em // default
-  background inherit
-  overflow hidden
+  display block
+  position absolute
+  left 0
+  right 0
+  top 0
+  bottom 10em // default
   margin 0
+  padding 0.5em
+  background transparent
+  overflow auto
+  // overflow hidden
+  // overflow-y auto
+
+  info-width = 6.5em
   > li
+    position relative
     display block
-    padding 0
-    margin 1px 0 0 0
-    border-radius 0.5em
+    list-style-type none
+    no-space()
+    border-radius 0.3em
     background-color lighten($bkg-color, 2%)
-    transitions all 0.3s ease-in-out
     opacity 0.88
     &:nth-child(even)
       background-color lighten($bkg-color, 3%)
     &:hover
       opacity 0.99
       background-color lighten($bkg-color, 10%)
+    &.unread
+      opacity 0.77
+      background-color lighten($bkg-color, 15%)
     > .info
+      position absolute
       font-size 14px
       line-height 16px
       display inline-block
       text-align center
       vertical-align top
-      width 6em
+      width info-width
       color darken($font-color, 25%)
       padding 0.3em
-      padding-right: 0.5em
+      .nick, .ts
+        display block
+        text-align center
+      .nick
+        color #cd5
+        font-weight bold
+        min-height 0.5em
     > .data
+      position relative
+      margin 0
+      margin-left 6em
       padding 0.1em 0.5em
-      display inline-block
       text-align left
       vertical-align top
       color $font-color
       min-height 2em
       border-left 1px dashed #444
+      word-wrap break-word
+      overflow hidden
+      // calc-width(100% \- info-width \- 0.5em) // not needed
+      //text-wrap suppress // not supported yet
+      //word-break hyphenation // not supported yet
       p
-        margin 0.5em 0
+        margin 0.5em 5px
+      a // *
+         word-wrap break-word
       *:first-child
         margin-top 0.3em
       *:last-child
         margin-bottom 0.3em
+      pre
+        word-wrap break-word
+        white-space pre-wrap
+      code
+        border-radius 0.25em
+      img
+        max-width 100%
+    // data color
+    &.message > .data
+      color #fff
+    &.system > .data
+      color #555
+    &.offline > .data
+        color #555
+        font-style italic
+    //.error > .data
+    //  color #933
 
-// not very important info
-.notice td, .join td, .part td, .message .date
-  color #555
-.error td
-  color #933
-.personal .nick, .notice .nick
-  color #cd5
-.message
-  margin 0.1em 0
-  td
-    vertical-align top
+.transition #msglog > li
+  transition(all 0.3s ease-in-out 30ms)
 
-.nick
-  font-weight bold
-  padding 0 1em 0 0.5em
-  a
-    color inherit
+.transition.fast #msglog > li
+  transition(all 0.3s ease-in-out 0.1s)
