@@ -148,8 +148,9 @@ _coffee = (filename, {minify, callback} = {}) ->
 # end of build coffee
 _coffeekup = (filename, options = {}, callback) ->
   throw 'need filename' unless filename
-  callback = cb if not callback? and typeof (cb = options.callback) is 'function'
+  callback = cb if not callback? and typeof (cb = options.callback or options) is 'function'
   basedir = (path.join (path.dirname filename), '_')[0...-1]
+  options.ts ?= new Date().getTime()
   options.partial ?= (name) ->
     data = fs.readFileSync basedir + name + '.coffee', 'utf-8'
     coffeekup.render data, options
@@ -175,7 +176,6 @@ _coffeekup = (filename, options = {}, callback) ->
   else
     layout = fs.readFileSync basedir + 'layout.coffee', 'utf-8'
     body = fs.readFileSync filename, 'utf-8'
-    options.ts ?= new Date().getTime()
     options.body = coffeekup.render body, options
     coffeekup.render layout, options
 # end of coffeekup

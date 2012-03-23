@@ -18,7 +18,7 @@ _out_path = (client, f...) ->
 coffee = (filename, client = no, callback) ->
   console.log 'start', filename
   outpath = _out_path client, _base_ext filename, '.coffee', '.js'
-  build.coffee (_src_path filename), minify: on, callback: (js) ->
+  build.coffee (_src_path filename), minify: client, callback: (js) ->
     console.log 'compiled', filename, '->', path.basename outpath
     build.write outpath, js, withgz: client, callback: ->
       console.log 'wrote', outpath
@@ -36,9 +36,9 @@ stylus = (filename, callback) ->
 coffeekup = (filename, callback) ->
   console.log 'start', filename
   outpath = _client_path _base_ext filename, '.coffee', '.html'
-  build.coffeekup (_src_path filename), (js) ->
+  build.coffeekup (_src_path filename), (html) ->
     console.log 'compiled', filename, '->', path.basename outpath
-    build.write outpath, js, withgz: on, callback: ->
+    build.write outpath, html, withgz: on, callback: ->
       console.log 'wrote', outpath
       callback? null
   return
@@ -58,11 +58,19 @@ task 'build', 'Build everything to ./server/', ->
         (callback) -> coffeekup 'views/client.coffee', callback
         (callback) -> coffee 'app.coffee', no, callback
         (callback) -> coffee 'scripts/client.coffee', yes, callback
-      ], (err, results) ->
+      ], (err) ->
         if err
           console.error 'build failed', err
         else
-          console.log 'build success'
+          console.log 'build done'
+
+task 'build:server', 'Build everything to ./server/', ->
+  build.mkdir _server_path '.'
+  coffee 'app.coffee', no, (err) ->
+    if err
+      console.error 'build failed', err
+    else
+      console.log 'build done'
 
 
 # task 'test', 'Run all test cases', ->
