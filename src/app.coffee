@@ -12,11 +12,7 @@ class App
   constructor: (@port = 8008) ->
     @svr = http.createServer @routing.bind @
     @io = require('socket.io').listen @svr
-    @io.set 'browser client handler', (req, res) ->
-      # console.log req
-      res.writeHead 404
-      res.end 'resource not found'
-      return
+    @io.set 'browser client', false
     @io.set 'log level', 1
     @io.set 'transports', [
       'websocket'

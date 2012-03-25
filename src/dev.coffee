@@ -3,17 +3,15 @@
 # for server
 express = require 'express'
 app = express.createServer()
-io = require('socket.io').listen app
-# dev setting
-io.set 'browser client handler', (req, res) ->
-  # console.log req
-  res.writeHead 404
-  res.end 'resource not found'
-  return
-io.set 'log level', 2
-io.set 'transports', [
-  'websocket'
-]
+sio = require 'socket.io'
+io = sio.listen app
+io.configure ->
+  # io.set 'store', new sio.RedisStore
+  io.set 'browser client', false
+  io.set 'log level', 2
+  io.set 'transports', [
+    'websocket'
+  ]
 # for compile
 fs = require 'fs'
 # modules
