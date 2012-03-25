@@ -16,8 +16,8 @@ header = 'madtalk - yyfearth.com/myyapps.com'
 mkdir = (dir, callback) ->
   # console.log 'mkdir', base, _rel
   if callback? # async
-    dir = dir.resolve dir
-    exec "mkdir -p \"#{path}\"", (err, stdout, stderr) ->
+    dir = path.resolve dir
+    exec "mkdir -p \"#{dir}\"", (err, stdout, stderr) ->
       callback stderr if stderr
       console.log err if err
       unless err
@@ -33,7 +33,7 @@ mkdir = (dir, callback) ->
     _rel = _rel.split /[\\\/]/
     base = [__dirname]
     base.push _rel.shift() while _rel[0] is '..'
-    base = path.resolve.apply path, base
+    base = path.resolve.apply null, base
     while (r = _rel.shift())
       base = path.join base, r
       fs.mkdirSync base unless path.existsSync base

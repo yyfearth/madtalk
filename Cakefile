@@ -49,20 +49,20 @@ task 'build', 'Build everything to ./server/', ->
     throw err if err
     console.log 'output dir cleared'
     # build.mkdir _server_path '.'
-    build.mkdir (cl = _client_path '.')
-    console.log 'start copy static files'
-    build.cpdirgz (_src_path 'public'), cl, ->
-      console.log 'static files copied'
-      async.parallel [
-        (callback) -> stylus 'styles/client.styl', callback
-        (callback) -> coffeekup 'views/client.coffee', callback
-        (callback) -> coffee 'app.coffee', no, callback
-        (callback) -> coffee 'scripts/client.coffee', yes, callback
-      ], (err) ->
-        if err
-          console.error 'build failed', err
-        else
-          console.log 'build done'
+    build.mkdir (cl = _client_path '.'), ->
+      console.log 'start copy static files'
+      build.cpdirgz (_src_path 'public'), cl, ->
+        console.log 'static files copied'
+        async.parallel [
+          (callback) -> stylus 'styles/client.styl', callback
+          (callback) -> coffeekup 'views/client.coffee', callback
+          (callback) -> coffee 'app.coffee', no, callback
+          (callback) -> coffee 'scripts/client.coffee', yes, callback
+        ], (err) ->
+          if err
+            console.error 'build failed', err
+          else
+            console.log 'build done'
 
 task 'build:server', 'Build everything to ./server/', ->
   build.mkdir _server_path '.'
