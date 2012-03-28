@@ -70,7 +70,7 @@ class MsgLog extends View
   # end of render list
   renderers:
     default: # http://webreflection.blogspot.com/2012/02/js1k-markdown.html
-      `function markdown(f){/*!(C) WebReflection*/for(var b="</code></pre>",c="blockquote>",e="(?:\\r\\n|\\r|\\n|$)",d="(.+?)"+e,a=[],h=["&(?!#?[a-z0-9]+;)","&amp;","<","&lt;",">","&gt;","^(?:\\t| {4})"+d,function(i,j){return a.push(j+"\n")&&"\0"},"^"+d+"=+"+e,"<h1>$1</h1>\n","^"+d+"-+"+e,"<h2>$1</h2>\n","^(#+)\\s*"+d,function(i,l,k,j){return"<h"+(j=l.length)+">"+k.replace(/#+$/,"")+"</h"+j+">\n"},"(?:\\* \\* |- - |\\*\\*|--)[-*][-* ]*"+e,"<hr/>\n","  +"+e,"<br/>","^ *(\\* |\\+ |- |\\d+. )"+d,function(i,l,k,j){return"<"+(j=/^\d/.test(l)?"ol>":"ul>")+"<li>"+markdown(k)+"</li></"+j},"</(ul|ol)>\\s*<\\1>","","([_*]{1,2})([^\\2]+?)(\\1)",function(i,l,k,j){return"<"+(j=l.length==2?"strong>":"em>")+k+"</"+j},"\\[(.+?)\\]\\((.+?) (\"|')(.+?)(\\3)\\)",'<a href="$2" title="$4">$1</a>',"^&gt; "+d,function(i,j){return"<"+c+markdown(j)+"</"+c},"</"+c+"\\s*<"+c,"","(\x60{1,2})([^\\r\\n]+?)\\1","<code>$2</code>","\\0",function(i){return"<pre><code>"+a.shift()+b},b+"\\s*<pre><code>",""],g=0;g<h.length;){f=f.replace(RegExp(h[g++],"gm"),h[g++])}return f}`
+      `function _1kmd(f){/*!(C) WebReflection*/for(var b="</code></pre>",c="blockquote>",e="(?:\\r\\n|\\r|\\n|$)",d="(.+?)"+e,a=[],h=["&(?!#?[a-z0-9]+;)","&amp;","<","&lt;",">","&gt;","^(?:\\t| {4})"+d,function(i,j){return a.push(j+"\n")&&"\0"},"^"+d+"=+"+e,"<h1>$1</h1>\n","^"+d+"-+"+e,"<h2>$1</h2>\n","^(#+)\\s*"+d,function(i,l,k,j){return"<h"+(j=l.length)+">"+k.replace(/#+$/,"")+"</h"+j+">\n"},"(?:\\* \\* |- - |\\*\\*|--)[-*][-* ]*"+e,"<hr/>\n","  +"+e,"<br/>","^ *(\\* |\\+ |- |\\d+. )"+d,function(i,l,k,j){return"<"+(j=/^\d/.test(l)?"ol>":"ul>")+"<li>"+_1kmd(k)+"</li></"+j},"</(ul|ol)>\\s*<\\1>","","([_*]{1,2})([^\\2]+?)(\\1)",function(i,l,k,j){return"<"+(j=l.length==2?"strong>":"em>")+k+"</"+j},"\\[(.+?)\\]\\((.+?) (\"|')(.+?)(\\3)\\)",'<a href="$2" title="$4">$1</a>',"^&gt; "+d,function(i,j){return"<"+c+_1kmd(j)+"</"+c},"</"+c+"\\s*<"+c,"","(\x60{1,2})([^\\r\\n]+?)\\1","<code>$2</code>","\\0",function(i){return"<pre><code>"+a.shift()+b},b+"\\s*<pre><code>",""],g=0;g<h.length;){f=f.replace(RegExp(h[g++],"gm"),h[g++])}return f}`
     text: (data) -> "<pre>#{data}</pre>" #@xss.str(data).replace /\n/g, '<br/>'
     code: (data) -> "<pre><code>#{data}</code></pre>"
     md: Markdown.md
@@ -154,8 +154,10 @@ class MsgLog extends View
       ul.appendChild @_renderitem msg
       return
     # console.log ul #, @channel.records
-    uri = 'data:text/html;charset=utf-8,' + ul.outerHTML
-    window.open uri, 'exports'
+    data = ul.outerHTML
+    uri = 'data:text/html;charset=utf-8,' + encodeURIComponent data.replace /\r\n|\r|\n/g, '\n'
+    # window.open uri, '_newtab'
+    @channel.system "Export HTML Log: [Save As HTML](#{uri} \"Save As HTML\")"
     @
 # end of class
 
