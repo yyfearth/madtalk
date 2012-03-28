@@ -34,7 +34,7 @@ class Channel
     @_load_user() unless @user?.nick
     @trigger 'inited', @
     # auto connect
-    @connect on if @auto_connect isnt off
+    @connect on if @auto_connect
     @
   # end of init
   _load_user: -> 

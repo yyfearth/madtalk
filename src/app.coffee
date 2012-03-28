@@ -8,8 +8,8 @@ http = require 'http'
 import './modules/channel'
 
 class App
-  @create: (port) -> new @ port
-  constructor: (@port = 8008) ->
+  @create: (ip, port) -> new @ ip, port
+  constructor: (@ip = '0.0.0.0', @port = 8008) ->
     @svr = http.createServer @routing.bind @
     @io = require('socket.io').listen @svr
     @io.set 'browser client', false
@@ -19,7 +19,7 @@ class App
     ]
     # prepare static files
     @prepare =>
-      @svr.listen @port
+      @svr.listen @port, @ip
       console.log "app listening on port #{@port} ..."
       return
   # end of constructor
@@ -109,14 +109,16 @@ class App
   
   MAX_AGE: 30 * 24 * 60 * 60 * 1000 # 30 days
   serve: (file, req, res) ->
-    console.log 'serve file', file
     data = @cache[file]
     lastmod = req.headers['if-modified-since']
     etag = req.headers['if-none-match']
     if lastmod and etag and etag is data.etag and data.mtime is new Date(lastmod).getTime()
+      console.log 'serve file not modified', file
       res.writeHead 304, "Not Modified"
       res.end
       return
+
+    console.log 'serve file', file
 
     res.setHeader 'Content-Type', data.type # mime
     res.setHeader 'Content-Encoding', 'gzip'

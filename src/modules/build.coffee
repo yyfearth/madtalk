@@ -115,7 +115,7 @@ write = (filename, data, {encoding, withgz, callback} = {}) ->
   callback = cb if not callback? and typeof (cb = arguments[arguments.length - 1]) is 'function'
   ext = (path.extname filename)[1..].toLowerCase()
   if /^(?:j|cs)s$/.test ext
-    data = "/*! #{header} */#{data}\n"
+    data = "/*! #{header} */\n#{data}\n"
   else if /^html?$/.test ext
     data = "#{data}<!-- #{header} -->\n"
   else

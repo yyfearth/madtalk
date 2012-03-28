@@ -18,6 +18,7 @@ fs = require 'fs'
 build = require './modules/build'
 {Channel} = require './modules/channel'
 
+ip = '0.0.0.0'
 port = 8008
 
 app.configure ->
@@ -86,5 +87,5 @@ process.once 'SIGUSR2', ->
   process.kill process.pid, 'SIGUSR2'
   return
 
-app.listen port
+app.listen port, ip
 console.log "app listening on port #{port} ..."
