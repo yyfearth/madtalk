@@ -12,7 +12,7 @@ class App
   constructor: (@ip = '0.0.0.0', @port = 8008) ->
     @svr = http.createServer @routing.bind @
     @io = require('socket.io').listen @svr
-    @io.set 'browser client', false
+    @io.set 'browser client', off
     @io.set 'log level', 1
     @io.set 'transports', [
       'websocket'
@@ -78,8 +78,8 @@ class App
       res.end()
     else if Channel.ID_REGEX.test req.url
       # channel
-      id = req.url
-      Channel.create {id, @io} unless Channel.has id
+      id = req.url[1..]
+      Channel.create { id, io: @io } unless Channel.has id
       @serve @files.client, req, res
     else if @files.regex.test req.url
       # static files

@@ -7,7 +7,7 @@ sio = require 'socket.io'
 io = sio.listen app
 io.configure ->
   # io.set 'store', new sio.RedisStore
-  io.set 'browser client', false
+  io.set 'browser client', off
   io.set 'log level', 2
   io.set 'transports', [
     'websocket'
