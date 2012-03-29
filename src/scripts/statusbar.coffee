@@ -19,7 +19,20 @@ class StatusBar extends View
     @_text @type, 'gfm'
     # check add permition button
     @_check()
+    # listen channel
+    @listen()
+  # end of init
+  listen: ->
+    _update = @update.bind @
+    @channel.bind
+      connected: => @online on
+      disconnected: => @online off
+      aftersync: _update
+      afteruseronline: _update
+      afteruseroffline: _update
+    @online on if @channel.logined # force
     @
+  # end of listen
   _text: (el, txt) ->
     el[if el.innerText? then 'innerText' else 'textContent'] = txt
   _check: ->
@@ -36,7 +49,7 @@ class StatusBar extends View
     console.log 'check', li, @el
     @
   # end of check
-  update: ->
+  update: -> # do not add args
     return @ unless @init
     # user nick
     @_text @nick, @channel.user.nick

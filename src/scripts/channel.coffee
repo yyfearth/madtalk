@@ -110,7 +110,7 @@ class Channel
   _bind: (event, fireevent) =>
     event = @_evt event
     fireevent = if fireevent then @_evt fireevent else event
-    @on event, (args...) => @fire fireevent, args...
+    @socket.on event, (args...) => @fire fireevent, args...
     @
 
   fire: (event, args...) =>
@@ -125,16 +125,22 @@ class Channel
   connect: -> # start connect, auto start when init
     url = @base + @id
     console.log 'connect', url
-    @socket = io.connect url # connect to server
-    # bind fns to client.io ! JS 1.8.5
-    @on = @socket.on.bind @socket
-    @emit = @socket.emit.bind @socket
-    console.log 'wait for connect msg'
+    @socket = sio = @io.connect url # connect to server
     # listen connect
-    @on 'connect', =>
-      return if false is @trigger 'connected', @ # call connected
-      @on 'disconnect', => @trigger 'disconnected', @ # bind disconnect
-      @_bind 'system'
+    sio.on 'connect', =>
+      @connected = yes
+      @trigger 'connected', @ # call connected
+      @socket.on 'disconnect', => @trigger 'disconnected', @ # bind disconnect
+      @_bind 'system' # bind system msg
+    sio.on 'connect_failed', =>
+      @trigger 'connectfailed', type, attempts
+      alert 'connect failed'
+    sio.on 'connecting', (t) ->
+      console.log 'connecting', t
+    sio.on 'reconnect', (type, attempts) =>
+      @trigger 'reconnect', type, attempts
+    # bind fns to client.io ! JS 1.8.5
+    console.log 'wait for connect msg'
     @
   # end of connect
 
@@ -142,7 +148,7 @@ class Channel
     return @ if @logined
     throw 'no user info' unless @user?.nick
     console.log 'do login', @user
-    @emit 'login', @user, (upduser) =>
+    @socket.emit 'login', @user, (upduser) =>
       console.log 'login callback', upduser
       unless upduser?.nick
         #throw upduser.err
@@ -195,7 +201,7 @@ class Channel
         clearTimeout _t
         callback ok is yes
 
-    @emit 'message', msg, _callback
+    @socket.emit 'message', msg, _callback
     # todo: add event here
     @
   # end of msg
@@ -204,7 +210,7 @@ class Channel
     throw 'not logined' unless @logined
     ts = new Date().getTime()
     return @ unless force or ts - @last > 10000 # 10s
-    @emit 'sync',
+    @socket.emit 'sync',
       last: @last
     , (ch) =>
       return @ if false is @trigger 'beforesync', ch # call event listeners
@@ -234,12 +240,12 @@ class Channel
   leave: -> @fire 'leave'
   
   listen: ->
-    @on 'sync', (ch) => @sync ch.force is yes # req sync
+    @socket.on 'sync', (ch) => @sync ch.force is yes # req sync
 
     @_bind 'message'
 
     # user online offline leave
-    @onuseronline = @onuseroffline = @onuserjoin
+    @socket.onuseronline = @socket.onuseroffline = @socket.onuserjoin
     @_bind 'online', 'useronline'
     @_bind 'offline', 'useroffline'
     @_bind 'leave', 'userleave'
@@ -248,7 +254,7 @@ class Channel
   # end of listen
 
   ### events ###
-  onleave: -> @emit 'leave' if @logined
+  onleave: -> @socket.emit 'leave' if @logined
   onmessage: (msg) -> @record msg if @logined
   onuserjoin: (user) -> # status must be online or offline
     return unless @logined

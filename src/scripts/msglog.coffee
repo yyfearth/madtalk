@@ -24,11 +24,50 @@ class MsgLog extends View
   ### public ###
   init: ->
     super()
+    @listen()
     @clear()
     hljs.initHighlighting()
     @on 'scroll', => @_scrolled()
     #Object.defineProperties @, # el shotcuts
   # end of init
+  listen: ->
+    _append = @append.bind @
+    @channel.bind
+      aftersync: ->
+        # filtered while appending
+        _append channel.records
+        
+        if channel.title
+          document.title = "Channel #{channel.title} - MadTalk"
+        else
+          document.title = "A New Channel #{channel.id} - MadTalk"
+        # doto: show title and creator in header?
+        return
+
+      disconnected: ->
+        _append
+          data: "You are offline now."
+          class: 'offline'
+        return
+
+      aftermessage: (msg) ->
+        _append msg
+        app.chat.notify msg
+      aftersystem: (msg) ->
+        msg.class = 'system'
+        _append msg
+
+      afteruseronline: (user) ->
+        _append
+          data: "User #{user.nick} is online now."
+          class: 'offline'
+          ts: user.ts
+      afteruseroffline: (user) ->
+        _append
+          data: "User #{user.nick} is offline now."
+          class: 'offline'
+          ts: user.ts
+    @
   clear: ->
     @el.innerHTML = ''
     @

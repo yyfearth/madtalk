@@ -7,30 +7,33 @@
 
 class Channel
   #! please use Channel.create instead of new Channel
-  constructor: (@id, @io) ->
+  constructor: (@id, @io, @listeners) ->
+    # auto bind listeners
+    @bind @listeners if @listeners
     @init()
 
   ### static ###
   @ID_REGEX: /^\/?[\w\-]+$/ # '.' is not allowed
   @channels: []
-  @create: ({id, io}) ->
+  @create: ({id, io, listeners}) ->
     # default args
     id ?= @channels.length
     io ?= @io or throw 'no socket.io specified'
-    # normalize id from '/xxxxx' to 'xxxxx'
-    throw id "#{id} should be consist of 0-9,A-Z,a-z,_,-" unless @ID_REGEX.test id
-    id = id[1..] if id[0] is '/'
-    id = id.toLowerCase()
+    if id isnt '?' # id='?' is a query
+      # normalize id from '/xxxxx' to 'xxxxx'
+      throw id "#{id} should be consist of 0-9,A-Z,a-z,_,-" unless @ID_REGEX.test id
+      id = id[1..] if id[0] is '/'
+      id = id.toLowerCase()
     # return exist channel
     return @channels.index[id] if @channels.index[id]?
     # create new channel
-    channel = new @ id, io
+    channel = new @ id, io, listeners
     @channels.push @channels.index[id] = channel
     channel
   # end of static create
   @has: (id) ->
     id = id.id if id.id?
-    id = '/' + id unless /^\//.test id
+    id = id[1..] if id[0] is '/'
     @channels.index[id.toLowerCase()]?
 
   ### public ###
@@ -51,6 +54,8 @@ class Channel
     console.log 'channel created', @id
     # auto start listening
     @listen on if @auto_listen isnt off
+    @inited = yes
+    @trigger 'inited'
     @
   # end of init
 
@@ -63,17 +68,32 @@ class Channel
   #   setTimeout fn, t # return
   # # end of wait
 
-  # # custom events
-  # bind: (event, fct) ->
-  #   ((@_events ?= {})[event] ?= []).push fct
-  #   @
-  # unbind: (event, fct) ->
-  #   (evts = @_events?[event])?.splice? evts.indexOf(fct), 1
-  #   @
-  # trigger: (event, args...) ->
-  #   return false if false is @_events?[event]?.every? (fct) => fct.apply @, args
-  #   @
-  # # end of custom events
+  # custom events
+  bind: (event, fct) ->
+    return @ unless event
+    unless fct? and typeof event is 'string'
+      for e, f of event
+        @bind e, f if event.hasOwnProperty e
+      return @
+    unless typeof event is 'string' and typeof fct is 'function'
+      throw 'invalid params for bind custom event bind(str, fn)'
+    # console.log 'bind', event, fct
+    ((@_events ?= {})[event] ?= []).push fct
+    @
+  unbind: (event, fct) ->
+    return @ unless event
+    unless fct? and typeof event is 'string'
+      for e, f of event
+        @unbind e, f if event.hasOwnProperty e
+      return @
+    unless typeof event is 'string' and typeof fct is 'function'
+      throw 'invalid params for unbind custom event unbind(str, fn)'
+    (evts = @_events?[event])?.splice? evts.indexOf(fct), 1
+    @
+  trigger: (event, args...) ->
+    return false if false is @_events?[event]?.every? (fct) => false isnt fct.apply @, args
+    @
+  # end of custom events
 
   listen: -> # start listening, auto start when init
     console.log 'start listening channel', @id
