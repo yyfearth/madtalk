@@ -87,7 +87,8 @@ class EntryArea extends View
     @value = @history[cur]
     false
   _onkeydown: (e) ->
-    if e.keyCode is 13 and not (e.ctrlKey or e.metaKey or e.shiftKey or e.altKey)
+    # shift/alt + enter is new line ; enter (default) or ctrl/cmd + enter is send
+    if e.keyCode is 13 and not (e.shiftKey or e.altKey)
       e.preventDefault()
       @_onchanged()
       return false unless @value.trim()
