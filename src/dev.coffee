@@ -49,6 +49,13 @@ app.get '/', (req, res) ->
   id++ while Channel.has (str_id = id.toString 36)
   res.redirect '/' + str_id
 
+app.get /!\?$/, (req, res) ->
+  if Channel.ID_REGEX.test (id = req.url[1...-2])
+    res.writeHead 304, 'Not Modified'
+  else
+    res.writeHead 404, 'Not Found'
+  res.end()
+
 compile_stylus = (callback) ->
   build.stylus __dirname + '/styles/client.styl'
     paths: [__dirname + '/styles/']

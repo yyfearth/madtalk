@@ -76,16 +76,26 @@ class App
       # res.redirect req.url[0...-1], 301
       res.writeHead 301, 'Location': req.url[0...-1]
       res.end()
+    else if req.url[-2..] is '!?'
+      if Channel.ID_REGEX.test (id = req.url[1...-2])
+        if Channel.has id
+          res.writeHead 304, 'Not Modified'
+        else
+          Channel.create { id, io: @io }
+          res.writeHead 201, 'Created'
+      else
+        res.writeHead 404, 'Not Found'
+      res.end()
     else if Channel.ID_REGEX.test req.url
       # channel
       id = req.url[1..]
       Channel.create { id, io: @io } unless Channel.has id
-      @serve @files.client, req, res
+      @serve { file: @files.client, caching: off, req, res }
     else if @files.regex.test req.url
       # static files
       file = req.url.match @files.regex
       # console.log 'routing file', req.url, file
-      @serve file[1], req, res
+      @serve { file: file[1], caching: on, req, res }
     else
       res.writeHead 404
       res.end 'resource not found'
@@ -108,17 +118,22 @@ class App
     return
   
   MAX_AGE: 30 * 24 * 60 * 60 * 1000 # 30 days
-  serve: (file, req, res) ->
+  MIN_AGE: 60 * 1000 # 1 min
+  serve: ({file, caching, req, res}) ->
     data = @cache[file]
-    lastmod = req.headers['if-modified-since']
-    etag = req.headers['if-none-match']
-    if lastmod and etag and etag is data.etag and data.mtime is new Date(lastmod).getTime()
-      console.log 'serve file not modified', file
-      res.writeHead 304, "Not Modified"
-      res.end
-      return
+    if caching
+      lastmod = req.headers['if-modified-since']
+      etag = req.headers['if-none-match']
+      if lastmod and etag and etag is data.etag and data.mtime is new Date(lastmod).getTime()
+        console.log 'serve file not modified', file
+        res.writeHead 304, 'Not Modified'
+        res.end()
+        return
 
-    console.log 'serve file', file
+    console.log 'serve file:', file, 'caching:', caching
+
+    expires = if caching then data.mtime.getTime() + @MAX_AGE else new Date().getTime() + @MIN_AGE
+    caching = if caching then @MAX_AGE else @MIN_AGE
 
     res.setHeader 'Content-Type', data.type # mime
     res.setHeader 'Content-Encoding', 'gzip'
@@ -126,8 +141,8 @@ class App
     res.setHeader 'Content-Length', data.gz.length
     res.setHeader 'Last-Modified', data.mtime.toUTCString()
     res.setHeader 'Date', new Date().toUTCString()
-    res.setHeader 'Expires', new Date(data.mtime.getTime() + @MAX_AGE).toUTCString()
-    res.setHeader 'Cache-Control', 'public, max-age=' + (@MAX_AGE / 1000)
+    res.setHeader 'Expires', new Date(expires).toUTCString()
+    res.setHeader 'Cache-Control', 'public, max-age=' + (caching / 1000)
     res.setHeader 'ETag', "\"#{data.gz.length}-#{Date.parse data.mtime}\""
     res.end data.gz, 'binary'
     return

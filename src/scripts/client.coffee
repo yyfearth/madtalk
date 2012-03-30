@@ -23,23 +23,8 @@ channel.bind
     # channel.bind
       # afterleave: ->
         #todo: leave and logout
-    app.chat.init().show()
+    app.chat.init().show() unless app.chat.inited
     # app.chat.panel.status.online on # force
     return
 
 channel.connect()
-
-# do ->
-#   url = location.pathname
-#   xhr = new XMLHttpRequest
-#   throw 'need ajax support' unless xhr
-#   xhr.onreadystatechange = -> if xhr.readyState is 4
-#     if xhr.status is 304
-#       channel.connect()
-#     else if xhr.status is 200
-#       channel.connect() # reload?
-#     else
-#       console.error "invalid status #{xhr.status}"
-#   xhr.open 'GET', url, true
-#   xhr.send null
-#   return

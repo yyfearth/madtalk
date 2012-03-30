@@ -122,32 +122,62 @@ class Channel
 
   ### methods ###
   base: '/' # 'http://madtalk.yyfearth.com:8008/'
-  connect: -> # start connect, auto start when init
+  connect: (isretry) -> # start connect, auto start when init
     url = @base + @id
     console.log 'connect', url
     @socket = sio = @io.connect url # connect to server
-    _timeout = @wait 3000, -> # 3s
+    unless @connected then _timeout = @wait 3000, -> # 3s
       _timeout = null
-      location.reload() if confirm 'Connection Timeout!\n Click OK to retry.'
+      if isretry
+        location.reload() if confirm 'Connection Timeout!\n Click OK to retry.'
+      else
+        @retry()
     # listen connect
     sio.on 'connect', =>
       _timeout = clearTimeout _timeout if _timeout
       @connected = yes
       @trigger 'connected', @ # call connected
-      @socket.on 'disconnect', => @trigger 'disconnected', @ # bind disconnect
+      @socket.on 'disconnect', =>
+        @trigger 'disconnected', @ # bind disconnect
+        @connected = no
+        return
       @_bind 'system' # bind system msg
     sio.on 'connect_failed', =>
       _timeout = clearTimeout _timeout if _timeout
+      @connected = no
       @trigger 'connectfailed', type, attempts
       alert 'connect failed'
     sio.on 'connecting', (t) ->
       console.log 'connecting', t
     sio.on 'reconnect', (type, attempts) =>
-      @trigger 'reconnect', type, attempts
+      @connected = yes
+      # todo: do not need to re-login for reconnection
+      location.reload() if confirm 'Reconneced Reload Required!\n Click OK to retry.'
+      @trigger 'reconnected', type, attempts
     # bind fns to client.io ! JS 1.8.5
     console.log 'wait for connect msg'
     @
   # end of connect
+
+  retry: ->
+    console.log 'retry, send ch query'
+    url = location.pathname + '!?'
+    xhr = new XMLHttpRequest
+    throw 'need ajax support' unless xhr
+    xhr.onreadystatechange = => if xhr.readyState is 4
+      console.log 'query callback', xhr.status
+      if xhr.status is 304
+        @connect yes
+      else if xhr.status is 201
+        if confirm 'Updated!\n Click OK to reload.'
+          location.reload()
+        else
+          @connect yes
+      else
+        console.error "invalid status #{xhr.status}"
+    xhr.open 'GET', url, true
+    xhr.send null
+    return
 
   login: (callback) -> # do login, called by outside
     return @ if @logined
@@ -293,6 +323,8 @@ class Channel
     disconnected: (ch) ->
       console.log 'disconnected'
       return
+    reconnected: (type, attempts) ->
+      console.log 'reconnected', type, attempts
     logined: (user) ->
       console.log 'logined', user
       return
@@ -324,5 +356,5 @@ class Channel
 
 do -> # helper
   # aliases
-  C = Channel
-  C::message = C::sendMessage = C::msg
+  C = Channel.prototype
+  C.message = C.sendMessage = C.msg

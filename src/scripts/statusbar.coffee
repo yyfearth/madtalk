@@ -25,7 +25,7 @@ class StatusBar extends View
   listen: ->
     _update = @update.bind @
     @channel.bind
-      connected: => @online on
+      logined: => @online on
       disconnected: => @online off
       aftersync: _update
       afteruseronline: _update
