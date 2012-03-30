@@ -7,6 +7,8 @@ class EntryArea extends View
     super @cfg # with auto init
     @history = [''] # max length 100
     @history.cur = 0 # 0 for current value
+    @preview_el = @parent.query '#preview'
+    @preview_el.hidden = false # temp
     ### public ###
     Object.defineProperties @,
       value:
@@ -110,6 +112,7 @@ class EntryArea extends View
       # console.log 'changed', _ov, _nv
       @_onchanged._value = _nv
       @resize()
+      @preview()
     return
   ### public ###
   init: ->
@@ -183,13 +186,28 @@ class EntryArea extends View
     if @value?.trim()
       setTimeout =>
         @el.style.height = 'auto'
-        @el.style.height = "#{Math.min @el.scrollHeight, window.innerHeight / 2}px"
+        @preview_el.style.height = @el.style.height = "#{Math.min @el.scrollHeight, window.innerHeight / 2}px"
         panel_changed()
       , 0
     else
       @el.style.height = 'auto'
       panel_changed()
     @
+  # end of resize
+  preview: -> # todo: sep renderer
+    el = @preview_el
+    unless @value.trim()
+      el.innerHTML = ''
+      el.style.height = 'auto'
+    else
+      # temp
+      el.innerHTML = @parent.parent.msglog.render type: 'gfm', data: @value
+      codes = [].slice.call el.querySelectorAll 'code'
+      # console.log 'hi', codes, hljs
+      codes.forEach (code) ->
+        # hljs.tabReplace = '<span class="indent">\t</span>'
+        hljs.highlightBlock code, null, (code.parentNode.tagName isnt 'PRE')
+  # end of preview
 # end of class
 
 # additional events: sent:(msg)|resized|changed:(old,new,@)

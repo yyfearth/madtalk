@@ -46,6 +46,22 @@
     &:focus
       background-color $bkg-color
 
+#panel.preview
+  textarea
+    clear left
+    width 50%
+  #preview
+    float right
+    width 50%
+    min-height 3em // inc padding
+    box-sizing(border-box)
+    padding 0.5em 1em
+    background-color rgba(lighten($bkg-color, 2%),0.5)
+    opacity 0.99
+    overflow auto
+    @import 'msgview'
+    msgview()
+
 .transition #panel
   > ul
     transition(background-color 0.3s ease-in-out)

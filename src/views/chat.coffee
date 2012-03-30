@@ -13,6 +13,7 @@ div '#chat', hidden: 'hidden', ->
       li -> span hidden: true, ->
         text 'Channel Uptime: '
         a '#uptime', -> '0s'
+    div '#preview', hidden: 'hidden'
     textarea '#entry',
       rows: 1
       maxlength: 30000

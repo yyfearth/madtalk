@@ -1,0 +1,22 @@
+msgview()
+  text-align left
+  color $font-color
+  word-wrap break-word
+  // calc-width(100% \- info-width \- 0.5em) // not needed
+  //text-wrap suppress // not supported yet
+  //word-break hyphenation // not supported yet
+  p
+    margin 0.5em 5px
+  a // *
+     word-wrap break-word
+  > *:first-child
+    margin-top 0.3em
+  > *:last-child
+    margin-bottom 0.3em
+  pre
+    word-wrap break-word
+    white-space pre-wrap
+  code
+    border-radius 0.25em
+  img
+    max-width 100%
