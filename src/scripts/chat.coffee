@@ -2,7 +2,6 @@
 # markdown and highlight for msglog and panel
 import 'lib/pagedown.mod.js'
 import 'lib/highlight.pack.js'
-import 'notifier'
 # sub views
 import 'msglog'
 import 'panel'
@@ -13,18 +12,22 @@ class Chat extends View
     super @cfg # with auto init
     @msglog = MsgLog.create el: '#msglog', parent: @
     @panel = Panel.create el: '#panel', parent: @
-    throw 'Notifier is not ready' unless Notifier?.audios?
-    @notifier = new Notifier
+    _active = null
+    ### public ###
+    Object.defineProperties @,
+      active:
+        get: -> _active
+        set: (value) ->
+          @_activate (_active = value) if _active isnt value
+          return
   ### static ###
   @create: (cfg) -> super @, cfg
   ### public ###
   init: ->
     super()
     console.log 'chat init'
-    @notifier.init() # todo: init after login, move to chat view
-    @notifier.onfocus = => @activate yes
-    @on 'focus', el: window, => @activate on
-    @on 'blur' , el: window, => @activate off
+    @on 'focus', el: window, => @active = on
+    @on 'blur' , el: window, => @active = off
     # init views
     @msglog.init()
     @panel.init()
@@ -32,17 +35,14 @@ class Chat extends View
       # console.log 'resized - reflow'
       @msglog.bottom = @panel.height + 1 # log resize
       return
-    @activate on # default on
+    @active = on # default on
     @
-  activate: (active = on) ->
-    @msglog.active = @active = active # globle lock
-    @notifier.active = not @active
+  _activate: (active = on) -> # call by msglog
+    @msglog.active = active # wont circle
+    console.log 'chat active', active
     if active
       window.focus()
-      @panel.entry.el.focus()
-    @
-  notify: (msg) ->
-    @notifier?.notify msg
+      @panel.entry.el.focus() # useless?
     @
 
 View.reg Chat # reg

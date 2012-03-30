@@ -1,9 +1,13 @@
 # imported by views.coffee
+import 'notifier'
 
 class MsgLog extends View
   type: 'msglog'
   constructor: (@cfg) ->
     super @cfg # with auto init
+    throw 'Notifier is not ready' unless Notifier?.audios?
+    @notifier = new Notifier
+    @notifier.onfocus = => @active = yes # override
     _active = null
     ### public ###
     Object.defineProperties @,
@@ -27,21 +31,19 @@ class MsgLog extends View
     @listen()
     @clear()
     hljs.initHighlighting()
+    @notifier.init()
     @on 'scroll', => @_scrolled()
     #Object.defineProperties @, # el shotcuts
   # end of init
   listen: ->
     _append = @append.bind @
+    _title = @_title.bind @
+    _notify = (msg) => @notifier.notify? msg
     @channel.bind
       aftersync: ->
         # filtered while appending
         _append channel.records
-        
-        if channel.title
-          document.title = "Channel #{channel.title} - MadTalk"
-        else
-          document.title = "A New Channel #{channel.id} - MadTalk"
-        # doto: show title and creator in header?
+        _title channel.title
         return
 
       disconnected: ->
@@ -52,7 +54,7 @@ class MsgLog extends View
 
       aftermessage: (msg) ->
         _append msg
-        app.chat.notify msg
+        _notify msg
       aftersystem: (msg) ->
         msg.class = 'system'
         _append msg
@@ -139,7 +141,10 @@ class MsgLog extends View
     @
 
   _activate: (active = on) ->
+    console.log 'msglog active', active
     @_updateread() if active
+    @notifier.active = not @active
+    @parent.active = active # wont circle
     @
   _updateread: -> # updated unread status
     return unless @active
@@ -157,6 +162,14 @@ class MsgLog extends View
       # else console.log 'unread', el.offsetTop, @scrollbottom, el
       read
     return
+  _title: ->
+    ch = @channel
+    if ch.title
+      document.title = "Channel #{ch.title} - MadTalk"
+    else
+      document.title = "A New Channel #{ch.id} - MadTalk"
+    @notifier.title = document.title
+    # doto: show title and creator in header?
   _scrolled: -> # defered scrolled
     return if @_scrolled._defer
     @_scrolled._defer = @wait 1000, -> # 1s
