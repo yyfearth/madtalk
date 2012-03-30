@@ -126,13 +126,18 @@ class Channel
     url = @base + @id
     console.log 'connect', url
     @socket = sio = @io.connect url # connect to server
+    _timeout = @wait 3000, -> # 3s
+      _timeout = null
+      location.reload() if confirm 'Connection Timeout!\n Click OK to retry.'
     # listen connect
     sio.on 'connect', =>
+      _timeout = clearTimeout _timeout if _timeout
       @connected = yes
       @trigger 'connected', @ # call connected
       @socket.on 'disconnect', => @trigger 'disconnected', @ # bind disconnect
       @_bind 'system' # bind system msg
     sio.on 'connect_failed', =>
+      _timeout = clearTimeout _timeout if _timeout
       @trigger 'connectfailed', type, attempts
       alert 'connect failed'
     sio.on 'connecting', (t) ->
