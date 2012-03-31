@@ -79,7 +79,7 @@ class MsgLog extends View
     return @ if false is @trigger 'beforeappend', msgs, @
     fragment = document.createDocumentFragment()
     msgs.forEach (msg) => unless msg.rendered # is msg.ts for modifies
-      fragment.appendChild @_renderitem msg
+      fragment.appendChild @_renderitem msg, on
       msg.rendered = msg.ts
       return
     @el.appendChild fragment
@@ -93,13 +93,13 @@ class MsgLog extends View
     @scroll() # auto scroll
     @
   # end of append
-  _renderitem: (msg) ->
+  _renderitem: (msg, unread) ->
     # todo: renderer
     li = document.createElement 'li'
     li.className = 'log'
     @addcls li, msg.class or 'message' # default is message
     @addcls li, msg.type if msg.type
-    @addcls li, 'unread' unless msg.local
+    @addcls li, 'unread' if unread or not msg.local
     nick = if msg.user?.nick then @xss.str msg.user.nick else ''
     ts = new Date(msg.ts or new Date).getShortTimeString no
     li.innerHTML = "<div class=\"info\">
