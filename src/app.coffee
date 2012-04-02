@@ -104,18 +104,15 @@ class App
     ua = req.headers['user-agent']
     if /MSIE [1-9]\./i.test ua
       msg = 'This WebApp does not support IE below 10!'
-      false
     else if /opera/i.test ua
       msg = 'This WebApp does not support Opera!'
-      false
     else if /^Mozilla\/4/i.test ua
       msg = 'This WebApp does not support your browser! \nIt seems your browser is out of date.'
-      false
     else
       return true
     # res.writeHead 200, 'Content-Type': 'text/plain'
     res.end msg
-    return
+    return false
   
   MAX_AGE: 30 * 24 * 60 * 60 * 1000 # 30 days
   MIN_AGE: 60 * 1000 # 1 min
