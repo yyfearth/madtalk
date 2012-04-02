@@ -13,6 +13,7 @@ div '#chat', hidden: 'hidden', ->
       li -> span hidden: true, ->
         text 'Channel Uptime: '
         a '#uptime', -> '0s'
+      li -> a '#reload', title: 'reload app', onclick: 'if(confirm(\'reload?\'))location.reload()', -> 'reload'
     div '#preview', hidden: 'hidden'
     textarea '#entry',
       rows: 1
