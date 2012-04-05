@@ -110,6 +110,8 @@ cpdirgz = (from, to, callback) ->
   return
 # end of cpdirgz
 
+gz = (data, encoding) -> gzip (new Buffer data, encoding), 9
+
 write = (filename, data, {encoding, withgz, callback} = {}) ->
   throw 'need filename and data' unless filename and data
   callback = cb if not callback? and typeof (cb = arguments[arguments.length - 1]) is 'function'
@@ -124,10 +126,10 @@ write = (filename, data, {encoding, withgz, callback} = {}) ->
   if callback? # async (callback is not func means no callback)
     fs.writeFile filename, data, encoding, (err) ->
       callback? err
-    if withgz then fs.writeFile filename + '.gz', (gzip (new Buffer data), 9), 'binary'
+    if withgz then fs.writeFile filename + '.gz', (gz data, encoding), 'binary'
   else
     fs.writeFileSync filename, data, encoding
-    if withgz then fs.writeFileSync filename + '.gz', (gzip (new Buffer data), 9), 'binary'
+    if withgz then fs.writeFileSync filename + '.gz', (gz data, encoding), 'binary'
   return
 # end of write
 

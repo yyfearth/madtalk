@@ -1,5 +1,7 @@
 # madtalk app.coffee for production use
 
+PORT = 8008
+
 fs = require 'fs'
 path = require 'path'
 http = require 'http'
@@ -9,7 +11,7 @@ import './modules/channel'
 
 class App
   @create: (ip, port) -> new @ ip, port
-  constructor: (@ip = '0.0.0.0', @port = 8008) ->
+  constructor: (@ip, @port = PORT) ->
     @svr = http.createServer @routing.bind @
     @io = require('socket.io').listen @svr
     @io.set 'browser client', off
@@ -97,8 +99,8 @@ class App
       # console.log 'routing file', req.url, file
       @serve { file: file[1], caching: on, req, res }
     else
-      res.writeHead 404
-      res.end 'resource not found'
+      res.writeHead 404, 'Not Found'
+      res.end '404 resource not found'
     return
   chkUA: (req, res) ->
     ua = req.headers['user-agent']
@@ -117,6 +119,13 @@ class App
   MAX_AGE: 30 * 24 * 60 * 60 * 1000 # 30 days
   MIN_AGE: 60 * 1000 # 1 min
   serve: ({file, caching, req, res}) ->
+    console.log req.headers
+    unless /\bgzip\b/.test req.headers['accept-encoding']
+      console.log 'gzip unsupported for the client', file
+      res.writeHead 406, 'Not Acceptable'
+      res.end 'the client does not support gziped content.'
+      return
+
     data = @cache[file]
     if caching
       lastmod = req.headers['if-modified-since']
