@@ -194,11 +194,12 @@ class Channel
         @_clear_user()
         return
       @user.sid = upduser.sid
-      @user.id = upduser.id
+      # @user.id = upduser.id
+      @user.nick = upduser.nick
       @user.status = upduser.status
       # copy all user props?
-      return if false is @trigger 'logined', @user # call logined
       @logined = yes
+      return if false is @trigger 'logined', @user # call logined
       @listen()
       callback? null # no err
       @_save_user()

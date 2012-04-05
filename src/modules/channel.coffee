@@ -101,6 +101,7 @@ class Channel
       # start listen for login
       console.log 'a user conn, wait for login ...', client.id
       client.on 'login', (user, callback) =>
+        user.sid = client.id
         console.log 'req login', user
         client.user = user
         try
@@ -137,20 +138,20 @@ Your first valid message will be the title of the channel!"
     user = client.user
     throw 'invalid or empty nickname' unless user?.nick and @_nick_regex.test user.nick
     # for no user auth now, only allow single client per user
-    throw 'nickname duplication' if @users.index[user.nick]?.online
+    throw 'nickname duplication' if @users.index[user.nick.toLowerCase()]?.online
     # todo: more exception
     # todo: user system, check
 
     # create or update user and reg to users
-    if user.id and (u = @users.index[id])?
+    if user.sid and (u = @users.index[user.sid])?
       # offline user
-      delete @users.index[id]
+      delete @users.index[user.sid]
       if u.nick isnt user.nick
         # u.old_nick = u.nick # do not care, as a new user
         u.nick = user.nick # overwrite
       u.sid = client.id
       user = u # pick org user info
-    else if user.nick and (u = @users.index[user.nick])?
+    else if user.nick and (u = @users.index[user.nick.toLowerCase()])?
       # not offline user, and nick dup
       throw 'nickname duplication' if u.online
       u.sid = client.id
@@ -158,7 +159,7 @@ Your first valid message will be the title of the channel!"
     else # new user
       user.sid = client.id
       @users.push user # add user to list
-    @users.index[user.nick] = @users.index[user.sid] = user # build index
+    @users.index[user.nick.toLowerCase()] = @users.index[user.sid] = user # build index
     client.user = user
     # return user
     callback? user
@@ -222,8 +223,8 @@ Your first valid message will be the title of the channel!"
     # user leave channel
     client.on 'leave', =>
       console.log 'user leave', user.nick, user.sid
-      @users[user.id] = null # not delete
-      delete @users.index[user.nick]
+      @users[user.sid] = null # not delete
+      delete @users.index[user.nick.toLowerCase()]
       delete @users.index[user.sid]
       client.broadcast.emit 'leave', user
       # todo: drop res
