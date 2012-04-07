@@ -127,14 +127,14 @@ class App
       return
 
     data = @cache[file]
-    if caching
-      lastmod = req.headers['if-modified-since']
-      etag = req.headers['if-none-match']
-      if lastmod and etag and etag is data.etag and data.mtime is new Date(lastmod).getTime()
-        console.log 'serve file not modified', file
-        res.writeHead 304, 'Not Modified'
-        res.end()
-        return
+    # if caching
+    lastmod = req.headers['if-modified-since']
+    etag = req.headers['if-none-match']
+    if lastmod and etag and etag is data.etag and data.mtime is new Date(lastmod).getTime()
+      console.log 'serve file not modified', file
+      res.writeHead 304, 'Not Modified'
+      res.end()
+      return
 
     console.log 'serve file:', file, 'caching:', caching
 
