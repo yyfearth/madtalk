@@ -9,7 +9,7 @@
         "stylus",
         "coffeekup"
     ],
-    "version": "0.9.0",
+    "version": "0.9.1",
     "author": "Wilson Young <yyfearth@gmail.com>",
     "contributors": [
         {
@@ -26,10 +26,7 @@
         "test": "./node_modules/.bin/nodemon src/dev.coffee"
     },
     "main": "app.js",
-    "license": [
-        "MIT",
-        "BSD"
-    ],
+    "license": "MIT",
     "dependencies": {
         "socket.io": "0.9.3"
     },
