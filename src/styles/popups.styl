@@ -1,0 +1,34 @@
+#popups
+  position fixed
+  display table
+  left 0
+  top 0
+  width 100%
+  height 100%
+  //right 0
+  //bottom 0
+  z-index 1000
+  > #mask
+    display table-cell
+    vertical-align middle
+    text-align center
+    opacity 0
+    background $bkg-color
+    background transparent -webkit-gradient(radial, 50% 50%, 20, 50% 50%, 800, from(rgba(#0001)), color-stop(0.35, rgba(#0001)), to(rgba(#0005))) !important
+    background transparent -webkit-radial-gradient(rgba(#0001), rgba(#0001) 35%, rgba(#0005)) !important
+    background transparent -moz-radial-gradient(rgba(#0001), rgba(#0001) 35%, rgba(#0005)) !important
+    background transparent -ms-radial-gradient(rgba(#0001), rgba(#0001) 35%, rgba(#0005)) !important
+    //background transparent -o-radial-gradient(rgba(#0001), rgba(#0001) 35%, rgba(#0005)) !important
+    background transparent radial-gradient(rgba(#0001), rgba(#0001) 35%, rgba(#0005)) !important
+    > .popup
+      display inline-block
+      text-align left
+      background-color: rgba(lighten($bkg-color, 1%), 0.8)
+      padding 1em
+      border-radius 0.5em
+      box-shadow(0 -0.2em 1em rgba(#0005))
+
+.transition #popups > #mask
+  transition(opacity 0.3s ease-in-out)
+
+@import 'login'

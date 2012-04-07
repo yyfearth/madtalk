@@ -1,6 +1,6 @@
 # imported by views.coffee
 
-class Login extends View
+class Login extends Popup
   type: 'login'
   constructor: (@cfg) ->
     # PLEASE USE View.create 'login', cfg instead of new

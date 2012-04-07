@@ -2,6 +2,7 @@
 
 # base view class
 import 'view'
+import 'popupview'
 # sub views
 import 'login'
 import 'chat'
@@ -16,12 +17,14 @@ class AppView extends View
   @create: (cfg) -> super @, cfg
   ### public ###
   init: ->
-    super()
     _trans = localStorage.transition
-    if _trans isnt 'off' # tmp
+    if _trans is 'off' # tmp
+      Popup::fade = 0
+    else
       el = document.documentElement
       el.className += ' transition'
       el.className += ' fast' if _trans is 'fast' # tmp
+    super()
     # init views
     @login.init()
     # @chat.init() # chat init after login

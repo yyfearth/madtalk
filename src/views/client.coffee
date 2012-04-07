@@ -3,7 +3,8 @@
 
 #h1 @title
 
-partial 'login'
+div '#popups', -> div '#mask', ->
+  partial 'login'
 
 partial 'chat'
 

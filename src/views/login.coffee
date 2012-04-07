@@ -1,4 +1,4 @@
-div '#login', hidden: true, -> form action: '#', method: 'POST', ->
+div '#login.popup', hidden: true, -> form action: '#', method: 'POST', ->
   fieldset ->
     legend 'Login'
     label for: 'nick', 'Nickname'

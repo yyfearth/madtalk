@@ -50,7 +50,7 @@ class Channel
       user = null
     @user = user
     return
-  _save_user: -> if @user?.nick
+  _save_user: -> if @logined and @user?.nick
     sessionStorage.user = JSON.stringify @user
     localStorage["channel-#{@id}-user"] = JSON.stringify
       nick: @user.nick
@@ -206,6 +206,14 @@ class Channel
       return
     @
   # end of login
+
+  logout: -> # tmp
+    return @ unless @logined
+    # todo: send logout to server
+    @logined = no
+    @_clear_user()
+    location.reload()
+    @
 
   record: (rec) -> # add record
     #if (r = @records.index[rec.ts])? # exists

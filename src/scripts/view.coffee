@@ -26,12 +26,7 @@ class View # view controller base class
       inited: get: -> _el? and @init isnt _init # has el and @init isnt org
       hidden:
         get: -> _el.hidden
-        set: (value) ->
-          return if false is @trigger "before#{if value then 'show' else 'hide'}", @
-          _el.hidden = Boolean value
-          _el.style.display = if value then 'none' else 'block'
-          @trigger "after#{if value then 'show' else 'hide'}", @
-          return
+        set: (value) -> @_hidden value
     # console.log 'constructor view'
 
     # auto bind listeners
@@ -68,7 +63,7 @@ class View # view controller base class
     throw 'sub class sould be a view class' unless (typeof sub is 'function') and sub::type
     @_views[sub::type] = sub
     @
-  ### public ###
+  ### methods ###
   xss: xss_safe # util
   init: ->
     unless @inited # to ensure run only once
@@ -92,6 +87,15 @@ class View # view controller base class
   # end of init
 
   # show hide shortcuts
+  _hidden: (value) ->
+    return if false is @trigger "before#{if value then 'show' else 'hide'}", @
+    value = Boolean value
+    @onhidden? value
+    @trigger "after#{if value then 'show' else 'hide'}", @
+    return
+  onhidden: (value) -> # use for override
+    @el.hidden = value
+    @el.style.display = if value then 'none' else 'block'
   show: (show = yes) ->
     @hidden = not show
     @
