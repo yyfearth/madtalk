@@ -107,13 +107,13 @@ class Channel
     throw "not such event #{event}" unless @event_regex.test event
     "#{event}".toLowerCase()
 
-  _bind: (event, fireevent) =>
+  _bind: (event, _fireevent) =>
     event = @_evt event
-    fireevent = if fireevent then @_evt fireevent else event
-    @socket.on event, (args...) => @fire fireevent, args...
+    _fireevent = if _fireevent then @_evt _fireevent else event
+    @socket.on event, (args...) => @_fire _fireevent, args...
     @
 
-  fire: (event, args...) =>
+  _fire: (event, args...) =>
     event = @_evt event
     return @ if false is @trigger "before#{event}", args... # call before event listeners
     return @ if false is @["on#{event}"]? args... # on event
@@ -261,8 +261,8 @@ class Channel
       @info = ch
       #@id = ch.id
       @users = ch.users # included me
-      @users.index = {}
-      ch.users.forEach (u) => @users.index[u.nick] = u
+      @users.index = {} # nick only
+      ch.users.forEach (u) => @users.index[u.nick.toLowerCase()] = u
       if ch.records?.length
         ch.records.forEach (r) => @record r
       @init = ch.init # channel init time
@@ -275,13 +275,13 @@ class Channel
   # end of sync
 
   system: (msg) -> # local system msg
-    @fire 'system',
+    @_fire 'system',
       data: msg
       local: yes
       ts: new Date().getTime()
   # end of system
 
-  leave: -> @fire 'leave'
+  leave: -> @_fire 'leave'
   
   listen: ->
     @socket.on 'sync', (ch) => @sync ch.force is yes # req sync
@@ -289,7 +289,7 @@ class Channel
     @_bind 'message'
 
     # user online offline leave
-    @socket.onuseronline = @socket.onuseroffline = @socket.onuserjoin
+    @onuseronline = @onuseroffline = @onuserjoin
     @_bind 'online', 'useronline'
     @_bind 'offline', 'useroffline'
     @_bind 'leave', 'userleave'
@@ -300,28 +300,32 @@ class Channel
   ### events ###
   onleave: -> @socket.emit 'leave' if @logined
   onmessage: (msg) -> @record msg if @logined
-  onuserjoin: (user) -> # status must be online or offline
+  onuserjoin: (user) -> # when user online or offline
     return unless @logined
     status = if user.online then 'online' else 'offline'
-    return @ if false is @trigger "beforeuser#{status}", user # call before event listeners
-    @users.push @users.index[user.nick] = user unless @users.index[user.nick]?
-    @users.index[user.nick].status = user.status
+    if (u = @users.index[user.nick.toLowerCase()])? # add to list if not exists
+      return false if u.online is user.online
+      u.online = user.online
+      u.status = user.status
+      # todo: customize status and change status event
+    else
+      @users.push @users.index[user.nick.toLowerCase()] = user
+      console.log 'push users', user, @users
     return
-  onuserleave: (user) ->
+  onuserleave: (user) -> # untested
     return unless @logined
-    if user.sid is @user.sid and user.kicked # kicked
+    if user.nick is @user.nick and user.kicked # kicked
       @leave() # ask to leave
-    else if (u = @users.index[user.nick])?
+    else if (u = @users.index[(nick = user.nick.toLowerCase())])?
       return @ if false is @trigger 'beforeuserleave', u # call before event listeners
-      @users[u.idx] = null # not delete
-      delete @users.index[u.nick]
-      @trigger 'afteruserleave', u # call before event listeners
+      @users.splice (@users.indexOf u), 1 # delete
+      delete @users.index[nick]
     return
 
   # todo: reconnect / reconnect_failed event
 
   # event listeners
-  listeners: # listenerss fired before event return false to cancel
+  listeners: # listenerss _fired before event return false to cancel
     # created: (ch) ->
     inited: (ch) ->
       console.log 'channel init', ch.id

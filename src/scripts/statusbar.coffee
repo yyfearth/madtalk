@@ -56,8 +56,10 @@ class StatusBar extends View
     # users list
     online_u = 0 #@channel.users.filter (u) -> u.status isnt 'offline'
     @list.title = @channel.users.map((u) ->
-      online_u++ if u.status isnt 'offline'
+      console.log u
+      online_u++ if u.online
       "* #{u.nick} #{u.status}").join '\n'
+    console.log 'upd', online_u, channel.users.length, channel.users
     @_text @list, @list.counter = "#{online_u} / #{channel.users.length}"
     @list.onclick ?= =>
       @channel.system "*Users in this channel #{@list.counter}*\n\n#{@list.title}"
@@ -65,6 +67,7 @@ class StatusBar extends View
     @
   online: (online = on) ->
     @_text @conn, if online then 'online' else 'offline'
+    @update()
     @
 # end of class
 

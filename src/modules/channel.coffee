@@ -173,12 +173,7 @@ Your first valid message will be the title of the channel!"
     user.online = yes
     console.log 'online', client.user.nick, client.user.online
     # broadcast one user connected
-    client.broadcast.emit 'online',
-        nick: user.nick
-        #id: user.id
-        online: user.online
-        status: user.status
-        ts: new Date().getTime()
+    client.broadcast.emit 'online', @_user_info user
     # end of brodcast
     @last = new Date().getTime() # last upt ts
     # listen and re-broadcast messages
@@ -200,7 +195,7 @@ Your first valid message will be the title of the channel!"
       callback # must exists
         id: @id
         records: @records.filter (r) -> r.ts >= last
-        users: @users
+        users: @users.map (user) => @_user_info user
         last: @last # last update ts
         init: @ts # channel ts
         creator: @creator # todo: simplify data
@@ -208,17 +203,12 @@ Your first valid message will be the title of the channel!"
         ts: new Date().getTime() # cur ts
       return
     # user offline
-    client.on 'disconnect', ->
+    client.on 'disconnect', =>
       console.log 'offline', client.user.nick, client.user.online
       return unless user.online
       user.status = 'offline'
       user.online = no
-      client.broadcast.emit 'offline',
-        nick: user.nick
-        #id: user.id
-        online: user.online
-        status: user.status
-        ts: new Date().getTime()
+      client.broadcast.emit 'offline', @_user_info user
       return
     # user leave channel
     client.on 'leave', =>
@@ -226,12 +216,19 @@ Your first valid message will be the title of the channel!"
       @users[user.sid] = null # not delete
       delete @users.index[user.nick.toLowerCase()]
       delete @users.index[user.sid]
-      client.broadcast.emit 'leave', user
+      client.broadcast.emit 'leave', @_user_info user
       # todo: drop res
       return
     @
   # end of handle
-
+  _user_info: (user) ->
+    nick: user.nick
+    #id: user.id
+    #email?: user.email?
+    online: user.online
+    status: user.status
+    ts: new Date().getTime()
+  # end of extract user info
   _title: (client, title) -> # set title
     #console.log 'org msg for title', title
     title = title.replace(/[\x00-\x1f\n\r\t\s]+|(?:<[^><]{6,}>)/g, ' ').trim()
