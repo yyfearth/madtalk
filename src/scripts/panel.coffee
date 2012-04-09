@@ -11,7 +11,7 @@ class Panel extends View
     ### private ###
     _get_view = (type, el) =>
       el ?= '#' + type
-      return el if el._is_view
+      return el if el instanceof View
       View.create type, { el, parent: @ } # return , channel: @channel 
     # end of get view
     _status = _get_view 'status', @cfg.status

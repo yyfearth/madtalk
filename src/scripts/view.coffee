@@ -8,13 +8,12 @@ class View # view controller base class
     # PLEASE USE View.create 'view', cfg instead of new
     throw 'bad cfg' unless @cfg? and @cfg.channel and @cfg.el
     @channel = @cfg.channel
-    @parent = @cfg.parent if @cfg.parent?._is_view
+    @parent = @cfg.parent if @cfg.parent instanceof View
     ### private ###
     _el = null
     _init = @init # org init
     ### public ###
     Object.defineProperties @,
-      _is_view: value: yes
       el:
         get: -> _el
         set: (value) ->
@@ -26,7 +25,7 @@ class View # view controller base class
       inited: get: -> _el? and @init isnt _init # has el and @init isnt org
       hidden:
         get: -> _el.hidden
-        set: (value) -> @_hidden value
+        set: (value) -> @_set_hidden value
     # console.log 'constructor view'
 
     # auto bind listeners
@@ -87,15 +86,12 @@ class View # view controller base class
   # end of init
 
   # show hide shortcuts
-  _hidden: (value) ->
+  _set_hidden: (value) -> # use for override in popup
     return if false is @trigger "before#{if value then 'show' else 'hide'}", @
-    value = Boolean value
-    @onhidden? value
-    @trigger "after#{if value then 'show' else 'hide'}", @
-    return
-  onhidden: (value) -> # use for override
     @el.hidden = value
     @el.style.display = if value then 'none' else 'block'
+    @trigger "after#{if value then 'show' else 'hide'}", @
+    return
   show: (show = yes) ->
     @hidden = not show
     @
@@ -104,7 +100,7 @@ class View # view controller base class
     @
 
   # helper
-  _els: ({els, el}) ->
+  _get_els: ({els, el}) ->
     if el and els
       throw 'only set one of el or els'
     else if el
@@ -127,7 +123,7 @@ class View # view controller base class
   #   throw 'no class names given' unless cls?.length
   #   unless /^(?:add|remove)$/.test act
   #     throw "unexpected act #{act}, expect add/remove"
-  #   els = @_els {els}
+  #   els = @_get_els {els}
   #   if @el.classList? # check only
   #     els.forEach (el) -> cls.forEach (cl) -> el.classList[act]? cl
   #   else # className
@@ -176,7 +172,7 @@ class View # view controller base class
       el = els = bind = null if l is 2
     throw 'need handler function' if typeof handler isnt 'function'
     # get els
-    els = @_els {el, els}
+    els = @_get_els {el, els}
     # console.log 'on', event, els, bind, handler
     # bind
     els.forEach (el) ->
@@ -194,7 +190,7 @@ class View # view controller base class
   # end of off
   fire: (event, {els, el, data, e} = {}) ->
     # get els
-    els = @_els {el, els}
+    els = @_get_els {el, els}
     # prepare e
     unless e
       e = document.createEvent 'HTMLEvents'
