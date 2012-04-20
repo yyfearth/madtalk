@@ -1512,8 +1512,8 @@ var Markdown = {};
 	}
 
 	// add by Wilson
-	pagedown = Markdown.getSanitizingConverter(); // new Markdown.Converter();
-	gfm = new Converter({soft_break:true,code_lang:true}); //
+	var pagedown = Markdown.getSanitizingConverter(), // new Markdown.Converter();
+		gfm = new Converter({soft_break:true,code_lang:true}); //
 	gfm.hooks.chain("postConversion", sanitizeHtml);
 	gfm.hooks.chain("postConversion", balanceTags);
 	gfm.hooks.chain("preConversion", function (text) {

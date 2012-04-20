@@ -3,7 +3,7 @@ MadTalk
 client scripts
 ###
 
-# "use strict"
+"use strict"
 
 # import client modules
 import 'polyfills'
