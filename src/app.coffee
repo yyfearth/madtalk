@@ -119,7 +119,7 @@ class App
   MAX_AGE: 30 * 24 * 60 * 60 * 1000 # 30 days
   MIN_AGE: 60 * 1000 # 1 min
   serve: ({file, caching, req, res}) ->
-    console.log req.headers
+    # console.log req.headers
     unless /\bgzip\b/.test req.headers['accept-encoding']
       console.log 'gzip unsupported for the client', file
       res.writeHead 406, 'Not Acceptable'

@@ -28,7 +28,7 @@
     "main": "app.js",
     "license": "MIT",
     "dependencies": {
-        "socket.io": "0.9.3"
+        "socket.io": "0.9.6"
     },
     "devDependencies": {
         "express": ">=2.5.8",
