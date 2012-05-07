@@ -102,9 +102,9 @@ class EntryArea extends View
       @_trvl_history e, no
     else if e.keyCode is 13 # new line
       @_onchanged()
-    else
-      clearTimeout _delay if (_delay = @_onchanged._delay)
-      @_onchanged._delay = @wait 300, @_onchanged
+    # else
+    #   clearTimeout _delay if (_delay = @_onchanged._delay)
+    #   @_onchanged._delay = @wait 300, @_onchanged
     return
   _onchanged: ->
     @_onchanged._delay = clearTimeout _delay if (_delay = @_onchanged._delay)
@@ -121,6 +121,9 @@ class EntryArea extends View
     # for keydown and changed
     _changed = @_onchanged.bind @
     @on 'keydown', (e) => @_onkeydown e
+    @on 'input', (e) =>
+      clearTimeout _delay if (_delay = @_onchanged._delay)
+      @_onchanged._delay = @wait 300, @_onchanged
     @on 'cut', _changed
     @on 'past', _changed
     @on 'drop', _changed
@@ -182,17 +185,19 @@ class EntryArea extends View
     return @ unless @inited
     panel_changed = =>
       setTimeout =>
+        @preview_el.style.height = @el.style.height # if preview
         @trigger 'resized', @
       , 0
-    if @value?.trim()
-      setTimeout =>
-        @el.style.height = 'auto'
-        @preview_el.style.height = @el.style.height = "#{Math.min @el.scrollHeight, window.innerHeight / 2}px"
-        panel_changed()
-      , 0
-    else
+    setTimeout =>
+      old_height_px = @el.style.height
       @el.style.height = 'auto'
-      panel_changed()
+      if @el.scrollHeight is @el._old_height
+        @el.style.height = old_height_px
+      else
+        @el._old_height = @el.scrollHeight
+        @el.style.height = "#{Math.min @el.scrollHeight, window.innerHeight / 2}px"
+        panel_changed() if old_height_px isnt @el.style.height
+    , 0
     @
   # end of resize
   preview: -> # todo: sep renderer
