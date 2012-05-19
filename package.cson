@@ -29,5 +29,5 @@ devDependencies:
   'cssmin': 'latest'
   'compress-buffer': 'latest'
   'async': 'latest'
-  'nodemon': 'latest'
-  'vows': '0.6.x'
+  #'nodemon': 'latest'
+  #'vows': '0.6.x'
