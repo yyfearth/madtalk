@@ -2,7 +2,6 @@ msgview()
   text-align left
   color $font-color
   word-wrap break-word
-  // calc-width(100% \- info-width \- 0.5em) // not needed
   //text-wrap suppress // not supported yet
   //word-break hyphenation // not supported yet
   p
@@ -14,7 +13,12 @@ msgview()
   > *:last-child
     margin-bottom 0.3em
   pre
-    word-wrap break-word
+    -ms-word-break break-all
+    word-break break-all
+    word-break break-word
+    //-webkit-hyphens auto
+    //-moz-hyphens auto
+    //hyphens auto
     white-space pre-wrap
   code
     border-radius 0.25em
