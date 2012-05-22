@@ -25,42 +25,42 @@ class App
       console.log "app listening on port #{@port} ..."
       return
   # end of constructor
+  _load_cache: (buf) ->
+    head_len = 0
+    pad_len = 16
+    pad_char = 0
+    head_len++ while buf[head_len]
+    head = buf.toString 'utf-8', 0, head_len
+    try
+      head = JSON.parse head
+    catch e
+      throw 'cannot parse package'
+    throw 'unacceptable package version ' + head.v unless head.v is 1
+    offset = head_len + pad_len
+    # test padding
+    throw 'read package error: head padding mismatch' if buf[offset - 1] isnt pad_char
+    # load content
+    files = head.files
+    list = Object.getOwnPropertyNames files
+    for name in list
+      file = files[name]
+      file.offset += offset
+      end = file.offset + file.length
+      throw 'read package error: padding mismatch' if buf[end] isnt pad_char
+      file.data = buf.slice file.offset, end
+      delete file.offset
+    files
+  # end of load cache package
   files:
+    cache: path.join __dirname, 'cache.dat'
     path: path.join __dirname, 'public'
     regex: /^\/(favicon\.ico|client\.(?:html|js|css))(?:\?\d+)?$/ # no index.html
     client: 'client.html'
-    mime:
-      'favicon.ico' : 'image/x-icon'
-      'client.js'   : 'application/javascript'
-      'client.css'  : 'text/css'
-      'client.html' : 'text/html'
   prepare: (callback) ->
-    c = @cache = list: []
-    files = Object.getOwnPropertyNames @files
-    timeout = setTimeout ->
-      throw 'load files timeout'
-    , 30*1000 # 30s
-    for f, t of @files.mime then do (f, t) =>
-      file = path.join @files.path, f
-      gzfile = file + '.gz'
-      fs.stat gzfile, (err, stat) ->
-        throw err if err
-        # org_stat = fs.statSync file
-        fs.readFile gzfile, 'binary', (err, data) =>
-          throw err if err
-          c[f] =
-            name: f
-            gz: data
-            mtime: stat.mtime
-            type: t
-            # size: org_stat.size
-          c.list.push f
-          console.log 'load file to cache', f
-          if c.list.length is files.length
-            clearTimeout timeout
-            callback() 
-          return
-        return
+    fs.readFile @files.cache, 'binary', (err, data) =>
+      throw err if err
+      @cache = @_load_cache new Buffer data, 'binary'
+      callback()
       return
   routing: (req, res) ->
     return unless @chkUA req, res
@@ -127,6 +127,8 @@ class App
       return
 
     data = @cache[file]
+    data.gz = data.data # rename
+    data.mtime = new Date data.ts
     # if caching
     lastmod = req.headers['if-modified-since']
     etag = req.headers['if-none-match']
@@ -141,7 +143,7 @@ class App
     expires = if caching then data.mtime.getTime() + @MAX_AGE else new Date().getTime() + @MIN_AGE
     caching = if caching then @MAX_AGE else @MIN_AGE
 
-    res.setHeader 'Content-Type', data.type # mime
+    res.setHeader 'Content-Type', data.mime
     res.setHeader 'Content-Encoding', 'gzip'
     res.setHeader 'Vary', 'Accept-Encoding'
     res.setHeader 'Content-Length', data.gz.length
