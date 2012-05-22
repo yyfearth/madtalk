@@ -11,7 +11,7 @@ stylus = require 'stylus'
 {cssmin} = require 'cssmin'
 #nib = require 'nib'
 
-header = 'madtalk - yyfearth.com/myyapps.com'
+HEADER = 'madtalk - yyfearth.com/myyapps.com'
 
 mkdir = (dir, callback) ->
   # console.log 'mkdir', base, _rel
@@ -50,7 +50,7 @@ rmdir = (dir, callback) ->
         if err then callback err
         unless stat.isDirectory() then callback "Path <#{dir}> is not a directory"
         dir = path.resolve dir
-        console.log 'rm -rf:', dir
+        console.log 'clean:', dir
         exec "rm -rf \"#{dir}\"", (err, stdout, stderr) ->
           callback stderr if stderr
           unless err
@@ -85,7 +85,7 @@ rmdir = (dir, callback) ->
   return
 # end of rmdir
 
-cpdirgz = (from, to, callback) ->
+cpdir = (from, to, callback) ->
   # do not copy sub dirs for now
   fs.readdir from, (err, files) ->
     throw err if err
@@ -103,7 +103,7 @@ cpdirgz = (from, to, callback) ->
             des = path.join to, name
             write des, data,
               encoding: 'binary'
-              withgz: on
+              # withgz: on
               callback: callback
         return
     , -> callback?()
@@ -112,26 +112,116 @@ cpdirgz = (from, to, callback) ->
 
 gz = (data, encoding) -> gzip (new Buffer data, encoding), 9
 
-write = (filename, data, {encoding, withgz, callback} = {}) ->
+add_header = (filename, data, header = HEADER) ->
+  ext = (path.extname filename)[1..].toLowerCase()
+  if /^(?:j|cs)s$/i.test ext
+    "/*! #{header} */\n#{data}\n"
+  else if /^html?$/i.test ext
+    "#{data}<!-- #{header} -->\n"
+  else
+    data
+# end of add header
+
+write = (filename, data, {encoding, callback} = {}) ->
   throw 'need filename and data' unless filename and data
   callback = cb if not callback? and typeof (cb = arguments[arguments.length - 1]) is 'function'
-  ext = (path.extname filename)[1..].toLowerCase()
-  if /^(?:j|cs)s$/.test ext
-    data = "/*! #{header} */\n#{data}\n"
-  else if /^html?$/.test ext
-    data = "#{data}<!-- #{header} -->\n"
-  else
-    data += '\n'
+  data = add_header filename, data
   # default encoding is urf-8
   if callback? # async (callback is not func means no callback)
     fs.writeFile filename, data, encoding, (err) ->
       callback? err
-    if withgz then fs.writeFile filename + '.gz', (gz data, encoding), 'binary'
   else
     fs.writeFileSync filename, data, encoding
-    if withgz then fs.writeFileSync filename + '.gz', (gz data, encoding), 'binary'
   return
 # end of write
+
+load_pkg = (buf) ->
+  head_len = 0
+  pad_len = 16
+  pad_char = 0
+  head_len++ while buf[head_len]
+  head = buf.toString 'utf-8', 0, head_len
+  try
+    head = JSON.parse head
+  catch e
+    throw 'cannot parse package'
+  throw 'unacceptable package version ' + head.v unless head.v is 1
+  offset = head_len + pad_len
+  # test padding
+  # console.log buf.toString 'utf-8', head_len, offset
+  # for i in [head_len...head_len + pad_len]
+  #   throw 'read package error: head padding mismatch' if buf[i] isnt pad_char
+  throw 'read package error: head padding mismatch' if buf[offset - 1] isnt pad_char
+  # load content
+  files = head.files
+  for name, file of files = head.files
+    if files.hasOwnProperty name
+      file.offset += offset
+      end = file.offset + file.length
+      throw 'read package error: padding mismatch' if buf[end] isnt pad_char
+      file.data = buf.slice file.offset, end
+      delete file.offset
+  files
+# end of load package
+
+mime_dict =
+  ico  : 'image/x-icon'
+  png  : 'image/png'
+  js   : 'application/javascript'
+  css  : 'text/css'
+  htm  : 'text/html'
+  html : 'text/html'
+
+get_mime = (filename) ->
+  ext = path.extname filename
+  mime_dict[ext[1..].toLowerCase()]
+
+build_pkg = (files, {filename, callback} = {}) ->
+  throw 'no files' unless files?.length
+  head = v: 1, ts: new Date().getTime(), files: {}
+  buffer = null
+  buf_size = 0
+  pad_len = 16
+  pad_char = 0
+  # files = [ {filename: '', mime: '', size: 0, data: Buffer} ]
+  files.forEach (file) ->
+    throw 'data should be a gziped buffer' unless file.data and Buffer.isBuffer file.data
+    len = file.data.length
+    head.files[file.filename.toLowerCase()] =
+      filename: file.filename
+      mime: file.mime or get_mime file.filename
+      gz: 1 # force
+      offset: buf_size
+      length: len # gz length
+      size: file.size # orginal size
+      ts: file.ts or head.ts
+    buf_size += pad_len + len
+  head_buf = JSON.stringify head
+  head_buf = new Buffer head_buf, 'utf-8'
+  head_len = head_buf.length
+  buf_size += head_len + 1 # buffer_size already contain an extra pad_len
+  buffer = new Buffer buf_size
+  # fill buffer
+  cur_pos = 0
+  # set head to the start of buffer
+  head_buf.copy buffer, cur_pos
+  cur_pos += head_len
+  # set data to buffer with padding
+  files.forEach (file) ->
+    buffer.fill pad_char, cur_pos, cur_pos + pad_len
+    cur_pos += pad_len
+    file.data.copy buffer, cur_pos
+    cur_pos += file.data.length
+  buffer.fill pad_char, buf_size - 1
+  # end of set buffer
+  if filename
+    if callback? # async (callback is not func means no callback)
+      fs.writeFile filename, buffer, 'binary', (err) ->
+        callback? err
+    else
+      fs.writeFileSync filename, buffer, 'binary'
+  buffer # return
+# end of build package
 
 _coffee = (filename, {minify, callback} = {}) ->
   throw 'need filename' unless filename
@@ -203,8 +293,11 @@ module.exports = {
   mkdir
   rmdir
   write
-  cpdirgz
+  cpdir
   coffee: _coffee
   coffeekup: _coffeekup
   stylus: _stylus
+  gz
+  load_pkg
+  build_pkg
 }
