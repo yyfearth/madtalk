@@ -54,7 +54,7 @@ class App
   files:
     cache: path.join __dirname, 'cache.dat'
     path: path.join __dirname, 'public'
-    regex: /^\/(favicon\.ico|client\.(?:html|js|css))(?:\?\d+)?$/ # no index.html
+    regex:  /^\/(\w+\.(?:ico|js|css|html|png))(?:\?\d+)?$/ # /^\/(favicon\.ico|client\.(?:html|js|css))(?:\?\d+)?$/ # no index.html
     client: 'client.html'
   prepare: (callback) ->
     fs.readFile @files.cache, 'binary', (err, data) =>
@@ -93,14 +93,15 @@ class App
       id = req.url[1..]
       Channel.create { id, io: @io } unless Channel.has id
       @serve { file: @files.client, caching: off, req, res }
-    else if @files.regex.test req.url
-      # static files
-      file = req.url.match @files.regex
-      # console.log 'routing file', req.url, file
-      @serve { file: file[1], caching: on, req, res }
     else
-      res.writeHead 404, 'Not Found'
-      res.end '404 resource not found'
+      file = req.url.match @files.regex
+      if file?[1] and @cache[file[1]]
+        # static files
+        # console.log 'routing file', req.url, file
+        @serve { file: file[1], caching: on, req, res }
+      else
+        res.writeHead 404, 'Not Found'
+        res.end '404 resource not found'
     return
   chkUA: (req, res) ->
     ua = req.headers['user-agent']
@@ -126,9 +127,10 @@ class App
       res.end 'the client does not support gziped content.'
       return
 
+    console.log file, @cache[file]
     data = @cache[file]
-    data.gz = data.data # rename
     data.mtime = new Date data.ts
+    data.gz = data.data # rename
     # if caching
     lastmod = req.headers['if-modified-since']
     etag = req.headers['if-none-match']

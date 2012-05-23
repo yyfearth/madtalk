@@ -89,13 +89,13 @@ cpdir = (from, to, callback) ->
   # do not copy sub dirs for now
   fs.readdir from, (err, files) ->
     throw err if err
-    async.forEach files, (name, callback) ->
+    async.map files, (name, callback) ->
       # console.log 'find', name
       src = path.join from, name
       fs.stat src, (err, stats) ->
         if stats.isDirectory()
           # console.log 'is dir', name
-          callback()
+          callback null
         else
           console.log 'copy file', name
           fs.readFile src, 'binary', (err, data) ->
@@ -103,29 +103,52 @@ cpdir = (from, to, callback) ->
             des = path.join to, name
             write des, data,
               encoding: 'binary'
-              # withgz: on
-              callback: callback
+              callback: -> callback null,
+                filename: name
+                data: new Buffer data, 'binary'
         return
-    , -> callback?()
+    , (err, data) ->
+      callback? err, data
   return
-# end of cpdirgz
+# end of cpdir
+
+gzdir = (files, callback) ->
+  if callback?
+    async.forEach files, (f, c) ->
+      throw 'file.data is not a buffer' unless Buffer.isBuffer f.data
+      async.nextTick ->
+        f.size = f.data.length
+        f.data = gz f.data
+        f.gz = 1
+        c()
+    , (err) -> callback? err, files
+    return
+  else
+    files.forEach (f) ->
+      throw 'file.data is not a buffer' unless Buffer.isBuffer f.data
+      f.size = f.data.length
+      f.data = gz f.data
+      f.gz = 1
+    files
+# end of gzdir
 
 gz = (data, encoding) -> gzip (new Buffer data, encoding), 9
 
 add_header = (filename, data, header = HEADER) ->
   ext = (path.extname filename)[1..].toLowerCase()
-  if /^(?:j|cs)s$/i.test ext
-    "/*! #{header} */\n#{data}\n"
-  else if /^html?$/i.test ext
-    "#{data}<!-- #{header} -->\n"
-  else
-    data
+  switch ext
+    when 'css', 'js'
+      return "/*! #{header} */\n#{data}\n"
+    when 'html'
+      return "#{data}<!-- #{header} -->\n"
+    else
+      return data
 # end of add header
 
 write = (filename, data, {encoding, callback} = {}) ->
+  # console.log filename, data.length
   throw 'need filename and data' unless filename and data
   callback = cb if not callback? and typeof (cb = arguments[arguments.length - 1]) is 'function'
-  data = add_header filename, data
   # default encoding is urf-8
   if callback? # async (callback is not func means no callback)
     fs.writeFile filename, data, encoding, (err) ->
@@ -185,7 +208,7 @@ build_pkg = (files, {filename, callback} = {}) ->
   pad_char = 0
   # files = [ {filename: '', mime: '', size: 0, data: Buffer} ]
   files.forEach (file) ->
-    throw 'data should be a gziped buffer' unless file.data and Buffer.isBuffer file.data
+    throw 'data should be a gziped buffer' unless file.data and file.gz and Buffer.isBuffer file.data
     len = file.data.length
     head.files[file.filename.toLowerCase()] =
       filename: file.filename
@@ -292,8 +315,10 @@ module.exports = {
   async
   mkdir
   rmdir
+  gzdir
   write
   cpdir
+  add_header
   coffee: _coffee
   coffeekup: _coffeekup
   stylus: _stylus
