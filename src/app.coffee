@@ -60,6 +60,7 @@ class App
     fs.readFile @files.cache, 'binary', (err, data) =>
       throw err if err
       @cache = @_load_cache new Buffer data, 'binary'
+      console.log 'cache loaded'
       callback()
       return
   routing: (req, res) ->
