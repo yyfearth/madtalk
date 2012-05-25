@@ -177,6 +177,9 @@ class Channel
           location.reload()
         else
           @connect yes
+      else if xhr.status is 404
+        console.error 'server is down, retry in 5s ...'
+        @wait 5000, -> @connect yes
       else
         console.error "invalid status #{xhr.status}"
     xhr.open 'GET', url, true
