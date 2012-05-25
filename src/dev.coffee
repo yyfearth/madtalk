@@ -52,9 +52,13 @@ app.get '/', (req, res) ->
   id++ while Channel.has (str_id = id.toString 36)
   res.redirect '/' + str_id
 
-app.get /!\?$/, (req, res) ->
+app.get /!\??$/, (req, res) ->
   if Channel.ID_REGEX.test (id = req.url[1...-2])
-    res.writeHead 304, 'Not Modified'
+    if Channel.has id
+      res.writeHead 304, 'Not Modified'
+    else
+      Channel.create {id, io}
+      res.writeHead 201, 'Created'
   else
     res.writeHead 404, 'Not Found'
   res.end()
