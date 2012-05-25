@@ -92,6 +92,7 @@ class Channel
       throw 'invalid params for unbind custom event unbind(str, fn)'
     (evts = @_events?[event])?.splice? evts.indexOf(fct), 1
     @
+  unbindAll: -> @_events = {}
   trigger: (event, args...) ->
     return false if false is @_events?[event]?.every? (fct) => false isnt fct.apply @, args
     @
@@ -125,7 +126,7 @@ class Channel
   connect: (isretry) -> # start connect, auto start when init
     url = @base + @id
     console.log 'connect', url
-    @socket = sio = @io.connect url # connect to server
+    sio = @socket ? (@socket = @io.connect url) # connect to server
     unless @connected then _timeout = @wait 3000, -> # 3s
       _timeout = null
       if isretry
@@ -150,9 +151,12 @@ class Channel
     sio.on 'connecting', (t) ->
       console.log 'connecting', t
     sio.on 'reconnect', (type, attempts) =>
-      @connected = yes
+      # @connected = yes
       # todo: do not need to re-login for reconnection
-      location.reload() if confirm 'Reconneced Reload Required!\n Click OK to retry.'
+      #location.reload() if confirm 'Reconneced Reload Required!\n Click OK to retry.'
+      return if false is @trigger 'reconnecting', type, attempts
+      sio.removeAllListeners()
+      @connect()
       @trigger 'reconnected', type, attempts
     # bind fns to client.io ! JS 1.8.5
     console.log 'wait for connect msg'
