@@ -118,6 +118,10 @@ class EntryArea extends View
   ### public ###
   init: ->
     super()
+    @channel.bind
+      online: => @el.disabled = no
+      offline: => @el.disabled = yes
+      disconnected: => @el.disabled = yes
     # for keydown and changed
     _changed = @_onchanged.bind @
     @on 'keydown', (e) => @_onkeydown e
