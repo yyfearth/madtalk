@@ -13,6 +13,8 @@ io.configure ->
   io.set 'transports', [
     'websocket'
   ]
+  io.set 'heartbeat timeout', 10
+  io.set 'heartbeat interval', 5
 # for compile
 fs = require 'fs'
 # modules

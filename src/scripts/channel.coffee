@@ -154,9 +154,10 @@ class Channel
       # @connected = yes
       # todo: do not need to re-login for reconnection
       #location.reload() if confirm 'Reconneced Reload Required!\n Click OK to retry.'
-      return if false is @trigger 'reconnecting', type, attempts
-      sio.removeAllListeners()
-      @connect()
+      # return if false is @trigger 'reconnecting', type, attempts
+      # sio.removeAllListeners()
+      # @connect()
+      @relogin()
       @trigger 'reconnected', type, attempts
     # bind fns to client.io ! JS 1.8.5
     console.log 'wait for connect msg'
@@ -213,6 +214,32 @@ class Channel
       return
     @
   # end of login
+
+  relogin: (callback) -> # do re-login, called by outside
+    throw 'no user info' unless @user?.nick
+    console.log 'do re-login', @user
+    @socket.emit 'login', @user, (upduser) =>
+      console.log 'login callback', upduser
+      unless upduser?.nick
+        #throw upduser.err
+        # @user?.nick = null
+        err = upduser?.err or 'unknown error'
+        @trigger 'loginfailed', err # call logined
+        callback? err
+        @_clear_user()
+        return
+      @user.sid = upduser.sid
+      # @user.id = upduser.id
+      @user.nick = upduser.nick
+      @user.status = upduser.status
+      # copy all user props?
+      @logined = yes
+      return if false is @trigger 'relogined', @user # call logined
+      callback? null # no err
+      @_save_user()
+      return
+    @
+  # end of relogin
 
   logout: -> # tmp
     return @ unless @logined
