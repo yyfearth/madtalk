@@ -1,3 +1,4 @@
+#!/usr/bin/env coffee
 # madtalk app.coffee for dev use
 
 # for server

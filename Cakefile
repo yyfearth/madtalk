@@ -22,9 +22,10 @@ _data = (outpath, data) ->
 coffee = (filename, client = no, callback) ->
   console.log 'start', filename
   outpath = _out_path client, _base_ext filename, '.coffee', '.js'
-  build.coffee (_src_path filename), minify: client, callback: (js) ->
+  build.coffee (_src_path filename), minify: on, callback: (js) ->
     console.log 'compiled', filename, '->', path.basename outpath
     js = build.add_header outpath, js
+    js = '#!/usr/bin/env node\n' + js unless client
     build.write outpath, js, callback: ->
       console.log 'wrote', outpath
       callback? null, unless client then null else _data outpath, js
@@ -51,7 +52,7 @@ coffeekup = (filename, callback) ->
   return
 
 
-task 'build', 'Build everything to ./server/', ->
+build_all = ->
   build.rmdir (_server_path '.'), (err) ->
     throw err if err
     console.log 'output dir cleaned'
@@ -70,6 +71,7 @@ task 'build', 'Build everything to ./server/', ->
             console.error 'build failed', err
           else
             # console.log files
+            fs.chmod (_server_path 'app.js'), '777' # start up
             files = (files.concat dir_files).filter (f) -> f?.data
             build.gzdir files, (err, files) ->
               throw err if err
@@ -80,13 +82,20 @@ task 'build', 'Build everything to ./server/', ->
                   console.log 'cache data created'
                   console.log 'build done'
               # console.log 'pkg\n', build.load_pkg pkg
+# end of build all
 
-task 'build:server', 'Build everything to ./server/', ->
+build_svr = ->
   build.mkdir _server_path '.'
   coffee 'app.coffee', no, (err) ->
     if err
       console.error 'build failed', err
     else
       console.log 'build done'
+# end of build server
+
+task 'build', 'Build everything to ./server/', build_all
+
+task 'build:server', 'Build everything to ./server/', build_svr
+
 
 # task 'test', 'Run all test cases', ->
