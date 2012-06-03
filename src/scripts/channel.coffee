@@ -126,7 +126,10 @@ class Channel
   connect: (isretry) -> # start connect, auto start when init
     url = @base + @id
     console.log 'connect', url
-    sio = @socket ? (@socket = @io.connect url) # connect to server
+    if @socket
+      @socket.removeAllListeners() # clean all listeners
+      @socket.disconnect()
+    sio = @socket = @io.connect url # connect to server
     unless @connected then _timeout = @wait 3000, -> # 3s
       _timeout = null
       if isretry
@@ -157,14 +160,16 @@ class Channel
       # return if false is @trigger 'reconnecting', type, attempts
       # sio.removeAllListeners()
       # @connect()
-      @relogin()
+      @retry =>
+        @connect yes
+        # @relogin()
       @trigger 'reconnected', type, attempts
     # bind fns to client.io ! JS 1.8.5
     console.log 'wait for connect msg'
     @
   # end of connect
 
-  retry: ->
+  retry: (callback) ->
     console.log 'retry, send ch query'
     url = location.pathname + '!?'
     xhr = new XMLHttpRequest
@@ -172,12 +177,18 @@ class Channel
     xhr.onreadystatechange = => if xhr.readyState is 4
       console.log 'query callback', xhr.status
       if xhr.status is 304
-        @connect yes
+        if callback
+          callback? no
+        else
+          @connect yes
       else if xhr.status is 201
         if confirm 'Updated!\n Click OK to reload.'
           location.reload()
         else
-          @connect yes
+          if callback
+            callback? yes
+          else
+            @connect yes
       else if xhr.status is 404
         console.error 'server is down, retry in 5s ...'
         @wait 5000, -> @connect yes
@@ -218,7 +229,7 @@ class Channel
   relogin: (callback) -> # do re-login, called by outside
     throw 'no user info' unless @user?.nick
     console.log 'do re-login', @user
-    @socket.emit 'login', @user, (upduser) =>
+    @socket.emit 'relogin', @user, (upduser) =>
       console.log 'login callback', upduser
       unless upduser?.nick
         #throw upduser.err

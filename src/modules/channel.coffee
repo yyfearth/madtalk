@@ -129,6 +129,22 @@ Your first valid message will be the title of the channel!"
         return
       # todo: set timeout for login
       # todo: manage clients
+      client.on 'relogin', (user, callback) =>
+        user.sid = client.id
+        console.log 'req re-login', user
+        client.user = user
+        try
+          @validate client, (user) =>
+            # bind event handlers
+            @handle client
+            # send login callback
+            callback? user
+            # push sync req
+            @sync client
+        catch err
+          console.error err
+          callback? err: err
+        return
     @
   # end of listen
 
