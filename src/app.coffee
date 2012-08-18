@@ -66,7 +66,7 @@ class App
       callback()
       return
   routing: (req, res) ->
-    return unless @chkUA req, res
+    return unless (@chkUA req, res) and (@_chk_gz req, res)
     # console.log 'routing', req.url
     if req.url is '/'
       # root
@@ -119,45 +119,58 @@ class App
     # res.writeHead 200, 'Content-Type': 'text/plain'
     res.end msg
     return false
-  
+
   MAX_AGE: 30 * 24 * 60 * 60 * 1000 # 30 days
   MIN_AGE: 60 * 1000 # 1 min
-  serve: ({file, caching, req, res}) ->
-    # console.log req.headers
-    unless /\bgzip\b/.test req.headers['accept-encoding']
-      console.log 'gzip unsupported for the client', file
-      res.writeHead 406, 'Not Acceptable'
-      res.end 'the client does not support gziped content.'
-      return
 
-    console.log file, @cache[file]
-    data = @cache[file]
-    data.mtime = new Date data.ts
-    data.gz = data.data # rename
-    # if caching
-    lastmod = req.headers['if-modified-since']
-    etag = req.headers['if-none-match']
-    if lastmod and etag and etag is data.etag and data.mtime is new Date(lastmod).getTime()
-      console.log 'serve file not modified', file
+  _chk_gz: (req, res) ->
+    unless /\bgzip\b/.test req.headers['accept-encoding']
+      console.log 'gzip unsupported for the client'
+      res.writeHead 406, 'Not Acceptable'
+      res.end 'the client does not support gziped content (accept-encoding header).'
+      false
+    else true
+  # end of check gz support
+  _chk_mod: (url, file, req, res) ->
+    _lastmod = req.headers['if-modified-since']
+    _etag = req.headers['if-none-match']
+    if _lastmod and _etag and _etag is file._etag and file.mtime is new Date(_lastmod).getTime()
+      console.log '304 served file not modified', url
       res.writeHead 304, 'Not Modified'
       res.end()
-      return
+      false
+    else true
+  # end of check if modified
+  serve: ({url, file, caching, req, res}) ->
+    # console.log req.headers
+    console.log 'req:', req.connection.remoteAddress, req.url
 
-    console.log 'serve file:', file, 'caching:', caching
+    unless _file = @cache[file]
+      throw 'failed to find the file ' + file
 
-    expires = if caching then data.mtime.getTime() + @MAX_AGE else new Date().getTime() + @MIN_AGE
-    caching = if caching then @MAX_AGE else @MIN_AGE
+    _file._mtime ?= new Date _file.mtime
+    _file._etag ?= "\"#{_file.size}-#{_file.mtime}\""
 
-    res.setHeader 'Content-Type', data.mime
-    res.setHeader 'Content-Encoding', 'gzip'
+    return unless @_chk_mod url, _file, req, res
+
+    console.log '200 serve file:', file # , 'caching:', caching
+
+    _expires = if caching then _file.mtime + @MAX_AGE else new Date().getTime() + @MIN_AGE
+    _caching = if caching then @MAX_AGE else @MIN_AGE
+
+    # for IE6 do not use 'Cache-Control: no-cache'
+    res.setHeader 'Content-Type', _file.mime
+    res.setHeader 'Content-Encoding', 'gzip' if _file.gz
     res.setHeader 'Vary', 'Accept-Encoding'
-    res.setHeader 'Content-Length', data.gz.length
-    res.setHeader 'Last-Modified', data.mtime.toUTCString()
+    res.setHeader 'Content-Length', _file.data.length
+    res.setHeader 'Last-Modified', _file._mtime.toUTCString()
     res.setHeader 'Date', new Date().toUTCString()
-    res.setHeader 'Expires', new Date(expires).toUTCString()
-    res.setHeader 'Cache-Control', 'public, max-age=' + (caching / 1000)
-    res.setHeader 'ETag', "\"#{data.gz.length}-#{Date.parse data.mtime}\""
-    res.end data.gz, 'binary'
+    res.setHeader 'Expires', new Date(_expires).toUTCString()
+    res.setHeader 'Cache-Control', 'public, max-age=' + (_caching / 1000) | 0
+    res.setHeader 'ETag', _file._etag
+    res.end _file.data, 'binary'
+
     return
+  # end of serve file
 
 app = App.create()
