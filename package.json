@@ -10,33 +10,28 @@
 		"coffeekup"
 	],
 	"version": "0.9.3",
-	"author": "Wilson Young <yyfearth@gmail.com>",
+	"author": "Wilson Young <yyfearth@gmail.com> (http://yyfearth.com/)",
 	"contributors": [
-		{
-			"name": "Wilson Young",
-			"email": "yyfearth@gmail.com"
-		},
-		{
-			"name": "Mason Wan",
-			"email": "masonaxcte@gmail.com"
-		}
+		"Mason Wan <masonaxcte@gmail.com>"
 	],
 	"scripts": {
 		"start": "node server/app.js",
-		"test": "./node_modules/.bin/nodemon src/dev.coffee"
+		"test": "./node_modules/extra-coffee-script/bin/coffee src/dev.coffee"
 	},
 	"main": "app.js",
 	"license": "MIT",
+	"engines": {
+		"node": "0.6.x || 0.8.x"
+	},
 	"dependencies": {
-		"socket.io": "0.9.6"
+		"socket.io": "latest"
 	},
 	"devDependencies": {
-		"express": ">=2.5.8",
+		"express": "2.x",
 		"extra-coffee-script": "latest",
 		"stylus": ">=0.19.0",
 		"coffeekup": ">=0.3.1",
 		"cssmin": "latest",
-		"compress-buffer": "latest",
 		"async": "latest"
 	}
 }

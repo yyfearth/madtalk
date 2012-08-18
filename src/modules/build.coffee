@@ -120,8 +120,10 @@ gzdir = (files, callback) ->
     throw 'file.data is not a buffer' unless Buffer.isBuffer f.data
     f.size = f.data.length
     zlib.gzip f.data, (err, gz_data) ->
-      f.data = gz_data
-      f.gz = 1
+      if gz_data.length < f.data.length
+        f.data = gz_data
+        f.gz = 1
+      else f.gz = 0
       c()
   , (err) -> callback? err, files
   return
