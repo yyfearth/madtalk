@@ -6,6 +6,7 @@ html ->
     title "#{@title} - MadTalk" if @title?
     meta(name: 'description', content: @description) if @description?
     link(rel: 'canonical', href: @canonical) if @canonical?
+    link(rel: 'apple-touch-icon', href: 'madtalk_ios_icon.png')
 
     meta(name:'viewport', content:'width=device-width, initial-scale=1, user-scalable=no')
     meta(name:'apple-mobile-web-app-capable', content:'yes')
