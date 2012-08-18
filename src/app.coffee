@@ -26,29 +26,31 @@ class App
       return
   # end of constructor
   _load_cache: (buf) ->
-    head_len = 0
+    head_len = 1
     pad_len = 16
     pad_char = 0
     head_len++ while buf[head_len]
-    head = buf.toString 'utf-8', 0, head_len
+    head = buf.toString 'utf-8', 1, head_len
+    throw 'read package error: format padding mismatch' unless buf[0] is buf[buf.length - 1] is pad_char
     try
       head = JSON.parse head
     catch e
       throw 'cannot parse package'
-    throw 'unacceptable package version ' + head.v unless head.v is 1
+    throw 'unacceptable package version ' + head.v unless head.v is 2
     offset = head_len + pad_len
     # test padding
     throw 'read package error: head padding mismatch' if buf[offset - 1] isnt pad_char
     # load content
-    files = head.files
-    list = Object.getOwnPropertyNames files
-    for name in list
-      file = files[name]
+    _get_data = (file) ->
       file.offset += offset
       end = file.offset + file.length
       throw 'read package error: padding mismatch' if buf[end] isnt pad_char
       file.data = buf.slice file.offset, end
       delete file.offset
+      return
+    files = head.files
+    _get_data files[name] for name in Object.getOwnPropertyNames files
+    # end of if is array
     files
   # end of load cache package
   files:

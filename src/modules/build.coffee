@@ -4,7 +4,7 @@ path = require 'path'
 fs = require 'fs'
 {exec} = require 'child_process'
 async = require 'async'
-{compress: gzip} = require 'compress-buffer'
+zlib = require 'zlib'
 xcoffee = require 'extra-coffee-script'
 coffeekup = require 'coffeekup'
 stylus = require 'stylus'
@@ -90,6 +90,9 @@ cpdir = (from, to, callback) ->
   fs.readdir from, (err, files) ->
     throw err if err
     async.map files, (name, callback) ->
+      if name[0] is '.'
+        callback null
+        return
       # console.log 'find', name
       src = path.join from, name
       fs.stat src, (err, stats) ->
@@ -113,26 +116,16 @@ cpdir = (from, to, callback) ->
 # end of cpdir
 
 gzdir = (files, callback) ->
-  if callback?
-    async.forEach files, (f, c) ->
-      throw 'file.data is not a buffer' unless Buffer.isBuffer f.data
-      async.nextTick ->
-        f.size = f.data.length
-        f.data = gz f.data
-        f.gz = 1
-        c()
-    , (err) -> callback? err, files
-    return
-  else
-    files.forEach (f) ->
-      throw 'file.data is not a buffer' unless Buffer.isBuffer f.data
-      f.size = f.data.length
-      f.data = gz f.data
+  async.forEach files, (f, c) ->
+    throw 'file.data is not a buffer' unless Buffer.isBuffer f.data
+    f.size = f.data.length
+    zlib.gzip f.data, (err, gz_data) ->
+      f.data = gz_data
       f.gz = 1
-    files
+      c()
+  , (err) -> callback? err, files
+  return
 # end of gzdir
-
-gz = (data, encoding) -> gzip (new Buffer data, encoding), 9
 
 add_header = (filename, data, header = HEADER) ->
   ext = (path.extname filename)[1..].toLowerCase()
@@ -159,83 +152,118 @@ write = (filename, data, {encoding, callback} = {}) ->
 # end of write
 
 load_pkg = (buf) ->
-  head_len = 0
+  head_len = 1
   pad_len = 16
   pad_char = 0
   head_len++ while buf[head_len]
-  head = buf.toString 'utf-8', 0, head_len
+  head = buf.toString 'utf-8', 1, head_len
+  throw 'read package error: format padding mismatch' unless buf[0] is buf[buf.length - 1] is pad_char
   try
     head = JSON.parse head
   catch e
     throw 'cannot parse package'
-  throw 'unacceptable package version ' + head.v unless head.v is 1
+  throw 'unacceptable package version ' + head.v unless head.v is 2
   offset = head_len + pad_len
   # test padding
-  # console.log buf.toString 'utf-8', head_len, offset
-  # for i in [head_len...head_len + pad_len]
-  #   throw 'read package error: head padding mismatch' if buf[i] isnt pad_char
   throw 'read package error: head padding mismatch' if buf[offset - 1] isnt pad_char
   # load content
+  _get_data = (file) ->
+    file.offset += offset
+    end = file.offset + file.length
+    throw 'read package error: padding mismatch' if buf[end] isnt pad_char
+    file.data = buf.slice file.offset, end
+    delete file.offset
+    return
   files = head.files
-  for name, file of files = head.files
-    if files.hasOwnProperty name
-      file.offset += offset
-      end = file.offset + file.length
-      throw 'read package error: padding mismatch' if buf[end] isnt pad_char
-      file.data = buf.slice file.offset, end
-      delete file.offset
+  _get_data files[name] for name in Object.getOwnPropertyNames files
+  # end of if is array
   files
 # end of load package
 
 mime_dict =
-  ico  : 'image/x-icon'
-  png  : 'image/png'
-  js   : 'application/javascript'
-  css  : 'text/css'
-  htm  : 'text/html'
-  html : 'text/html'
+  js  : 'application/javascript;charset=utf-8'
+  json: 'application/json;charset=utf-8'
+  html: 'text/html;charset=utf-8'
+  xml : 'text/xml;charset=utf-8'
+  xsl : 'text/xml'
+  xsd : 'text/xml'
+  css : 'text/css'
+  txt : 'text/plain'
+  png : 'image/png'
+  jpg : 'image/jpeg'
+  gif : 'image/gif'
+  ico : 'image/x-icon'
+  bmp : 'image/x-ms-bmp'
+  mp3 : 'audio/mpeg'
+  ogg : 'audio/ogg'
+  wav : 'audio/x-wav'
+  appcache: 'text/cache-manifest'
+  0: 'application/octet-stream' # default
+
+mime_dict.jpeg = mime_dict.jpg
+mime_dict.htm = mime_dict.html
+
+# end of mime_dict
+
+get_mime_name = (filename) ->
+  ext = (path.extname filename)[1..].toLowerCase()
+  if mime_dict.hasOwnProperty ext then ext else 0
 
 get_mime = (filename) ->
   ext = path.extname filename
   mime_dict[ext[1..].toLowerCase()]
 
 build_pkg = (files, {filename, callback} = {}) ->
-  throw 'no files' unless files?.length
-  head = v: 1, ts: new Date().getTime(), files: {}
+  if typeof files is 'string' # a dir path is given
+    files = lsdirSync files
+    readdirgz files, (err, files) ->
+      if err
+        throw err unless callback?
+        callback err
+      else
+        build_pkg files, {filename, callback}
+    return
+  throw 'no files' unless files?[0]?.filename
+  head = v: 2, ts: new Date().getTime(), files: {}
   buffer = null
   buf_size = 0
   pad_len = 16
   pad_char = 0
   # files = [ {filename: '', mime: '', size: 0, data: Buffer} ]
   files.forEach (file) ->
-    throw 'data should be a gziped buffer' unless file.data and file.gz and Buffer.isBuffer file.data
+    throw 'data should be a buffer' unless file.data and Buffer.isBuffer file.data
+    
     len = file.data.length
-    head.files[file.filename.toLowerCase()] =
+    mime = file.mime or get_mime file.filename # 0 for not found
+
+    # head.files[file.filename.toLowerCase()] = # case insensitive
+    head.files[file.filename] = # case sensitive
       filename: file.filename
       mime: file.mime or get_mime file.filename
-      gz: 1 # force
+      gz: file.gz
       offset: buf_size
       length: len # gz length
       size: file.size # orginal size
-      ts: file.ts or head.ts
+      mtime: file.mtime
+    
     buf_size += pad_len + len
-  head_buf = JSON.stringify head
-  head_buf = new Buffer head_buf, 'utf-8'
+
+  head_buf = new Buffer (JSON.stringify head), 'utf-8'
   head_len = head_buf.length
-  buf_size += head_len + 1 # buffer_size already contain an extra pad_len
+  buf_size += head_len + 2 # buffer_size already contain an extra pad_len
   buffer = new Buffer buf_size
   # fill buffer
-  cur_pos = 0
-  # set head to the start of buffer
+  buffer.fill pad_char # fill pad_char to all
+  cur_pos = 1
+  # set head to the start (2rd char) of buffer
   head_buf.copy buffer, cur_pos
   cur_pos += head_len
   # set data to buffer with padding
   files.forEach (file) ->
-    buffer.fill pad_char, cur_pos, cur_pos + pad_len
     cur_pos += pad_len
     file.data.copy buffer, cur_pos
     cur_pos += file.data.length
-  buffer.fill pad_char, buf_size - 1
+    return
   # end of set buffer
   if filename
     if callback? # async (callback is not func means no callback)
@@ -322,7 +350,6 @@ module.exports = {
   coffee: _coffee
   coffeekup: _coffeekup
   stylus: _stylus
-  gz
   load_pkg
   build_pkg
 }
