@@ -156,7 +156,7 @@ class Channel
     sio.on 'reconnect', (type, attempts) =>
       # @connected = yes
       # todo: do not need to re-login for reconnection
-      #location.reload() if confirm 'Reconneced Reload Required!\n Click OK to retry.'
+      location.reload() if confirm 'Reconneced Reload Required!\n Click OK to retry.'
       # return if false is @trigger 'reconnecting', type, attempts
       # sio.removeAllListeners()
       # @connect()
