@@ -9,6 +9,7 @@
   padding 0.5em
   background transparent
   overflow auto
+  -webkit-font-smoothing antialiased
   // overflow hidden
   // overflow-y auto
 
@@ -20,14 +21,13 @@
     no-space()
     border-radius 0.3em
     background-color lighten($bkg-color, 2%)
-    opacity 0.88
+    opacity 0.8
     &:nth-child(even)
       background-color lighten($bkg-color, 3%)
     &:hover
-      opacity 0.99
+      opacity 0.9
       background-color lighten($bkg-color, 10%)
     &.unread
-      opacity 0.77
       background-color lighten($bkg-color, 15%)
     > .info
       position absolute
