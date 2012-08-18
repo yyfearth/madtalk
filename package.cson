@@ -1,8 +1,11 @@
 #! package.cson
 name: 'madtalk'
 description: 'MadTalk'
-keywords: ['madtalk', 'chat', 'markdown', 'coffee', 'stylus', 'coffeekup']
-version: '0.9.3'
+keywords: [
+  'madtalk', 'im', 'group', 'chat', 'room'
+  'markdown', 'coffee', 'stylus', 'coffeekup'
+]
+version: '0.9.4'
 author: 'Wilson Young <yyfearth@gmail.com> (http://yyfearth.com/)'
 contributors: [
   'Mason Wan <masonaxcte@gmail.com>'
@@ -27,5 +30,5 @@ devDependencies:
   'coffeekup': '>=0.3.1'
   'cssmin': 'latest'
   'async': 'latest'
-  #'nodemon': 'latest'
-  #'vows': '0.6.x'
+  # 'nodemon': 'latest'
+  # 'vows': '0.6.x'

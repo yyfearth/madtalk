@@ -3,13 +3,16 @@
 	"description": "MadTalk",
 	"keywords": [
 		"madtalk",
+		"im",
+		"group",
 		"chat",
+		"room",
 		"markdown",
 		"coffee",
 		"stylus",
 		"coffeekup"
 	],
-	"version": "0.9.3",
+	"version": "0.9.4",
 	"author": "Wilson Young <yyfearth@gmail.com> (http://yyfearth.com/)",
 	"contributors": [
 		"Mason Wan <masonaxcte@gmail.com>"
