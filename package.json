@@ -1,5 +1,10 @@
 {
 	"name": "madtalk",
+	"subdomain": "madtalk",
+	"domains": [
+		"madtalk.yyfearth.com",
+		"madtalk.myyapps.com"
+	],
 	"description": "MadTalk",
 	"keywords": [
 		"madtalk",
