@@ -9,6 +9,8 @@ xcoffee = require 'extra-coffee-script'
 coffeekup = require 'coffeekup'
 stylus = require 'stylus'
 {cssmin} = require 'cssmin'
+exists = fs.exists or path.exists
+existsSync = fs.existsSync or path.existsSync
 #nib = require 'nib'
 
 HEADER = 'madtalk - yyfearth.com/myyapps.com'
@@ -36,13 +38,13 @@ mkdir = (dir, callback) ->
     base = path.resolve.apply null, base
     while (r = _rel.shift())
       base = path.join base, r
-      fs.mkdirSync base unless path.existsSync base
+      fs.mkdirSync base unless existsSync base
   return
 # end of mkdir
 
 rmdir = (dir, callback) ->
   if callback? # async
-    path.exists dir, (exists) ->
+    exists dir, (exists) ->
       unless exists
         callback?()
         return
@@ -58,7 +60,7 @@ rmdir = (dir, callback) ->
             return
           rmdir dir # fallback
   else # sync
-    unless path.existsSync dir
+    unless existsSync dir
       # console.log 'Directory <#{dir}> does not exist'
       return false
     
