@@ -1,4 +1,4 @@
-/*! Socket.IO.js build:0.9.10, development. Copyright(c) 2011 LearnBoost <dev@learnboost.com> MIT Licensed */
+/*! Socket.IO.js build:0.9.11, development. Copyright(c) 2011 LearnBoost <dev@learnboost.com> MIT Licensed */
 
 var io = window.io = {};
 (function() {
@@ -25,7 +25,7 @@ var io = window.io = {};
    * @api public
    */
 
-  io.version = '0.9.10';
+  io.version = '0.9.11';
 
   /**
    * Protocol implemented.
@@ -262,7 +262,7 @@ var io = window.io = {};
 
   util.request = function (xdomain) {
 
-    if (xdomain && 'undefined' != typeof XDomainRequest) {
+    if (xdomain && 'undefined' != typeof XDomainRequest && !util.ua.hasCORS) {
       return new XDomainRequest();
     }
 
@@ -318,7 +318,7 @@ var io = window.io = {};
    *
    * @api public
    */
-  
+
   util.merge = function merge (target, additional, deep, lastseen) {
     var seen = lastseen || []
       , depth = typeof deep == 'undefined' ? 2 : deep
@@ -343,7 +343,7 @@ var io = window.io = {};
    *
    * @api public
    */
-  
+
   util.mixin = function (ctor, ctor2) {
     util.merge(ctor.prototype, ctor2.prototype);
   };
@@ -391,7 +391,7 @@ var io = window.io = {};
     }
 
     return ret;
-  }
+  };
 
   /**
    * Array indexOf compatibility.
@@ -401,8 +401,8 @@ var io = window.io = {};
    */
 
   util.indexOf = function (arr, o, i) {
-    
-    for (var j = arr.length, i = i < 0 ? i + j < 0 ? 0 : i + j : i || 0; 
+
+    for (var j = arr.length, i = i < 0 ? i + j < 0 ? 0 : i + j : i || 0;
          i < j && arr[i] !== o; i++) {}
 
     return j <= i ? -1 : i;
@@ -944,7 +944,7 @@ var io = window.io = {};
 
   Transport.prototype.heartbeats = function () {
     return true;
-  }
+  };
 
   /**
    * Handles the response from the server. When a new response is received
@@ -957,8 +957,8 @@ var io = window.io = {};
 
   Transport.prototype.onData = function (data) {
     this.clearCloseTimeout();
-    
-    // If the connection in currently open (or in a reopening state) reset the close 
+
+    // If the connection in currently open (or in a reopening state) reset the close
     // timeout since we have just received data. This check is necessary so
     // that we don't reset the timeout on an explicitly disconnected connection.
     if (this.socket.connected || this.socket.connecting || this.socket.reconnecting) {
@@ -1010,7 +1010,7 @@ var io = window.io = {};
    *
    * @api private
    */
-  
+
   Transport.prototype.setCloseTimeout = function () {
     if (!this.closeTimeout) {
       var self = this;
@@ -1043,7 +1043,7 @@ var io = window.io = {};
   Transport.prototype.onConnect = function () {
     this.socket.onConnect();
     return this;
-  }
+  };
 
   /**
    * Clears close timeout
@@ -1094,7 +1094,7 @@ var io = window.io = {};
   Transport.prototype.onHeartbeat = function (heartbeat) {
     this.packet({ type: 'heartbeat' });
   };
- 
+
   /**
    * Called when the transport opens.
    *
