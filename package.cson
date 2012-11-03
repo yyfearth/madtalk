@@ -10,7 +10,7 @@ keywords: [
   'madtalk', 'im', 'group', 'chat', 'room'
   'markdown', 'coffee', 'stylus', 'coffeekup'
 ]
-version: '0.9.4'
+version: '0.9.5'
 author: 'Wilson Young <yyfearth@gmail.com> (http://yyfearth.com/)'
 contributors: [
   'Mason Wan <masonaxcte@gmail.com>'
@@ -29,6 +29,8 @@ dependencies: # dependencies to run
 # use --dev to install all with their dependencies
 # default npm will install the top-level dev dependencies
 devDependencies:
+  # 'marked': 'latest'
+  # 'hljs': 'latest'
   'express': '2.x'
   'extra-coffee-script': 'latest'
   'stylus': '>=0.19.0'
