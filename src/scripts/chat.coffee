@@ -1,7 +1,6 @@
 # imported by appview.coffee
 # markdown and highlight for msglog and panel
-import 'lib/pagedown.mod.js'
-import 'lib/highlight.pack.js'
+import 'lib/markdown+highlight'
 # sub views
 import 'msglog'
 import 'panel'
