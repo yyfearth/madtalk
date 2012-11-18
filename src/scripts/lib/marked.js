@@ -13,13 +13,16 @@ var block = {
   newline: /^\n+/,
   code: /^( {4}[^\n]+\n*)+/,
   fences: noop,
+  nptable: noop,
   hr: /^( *[-*_]){3,} *(?:\n+|$)/,
+  table: /^(([^|]+\|)+[^\n]*){2,}/,
   heading: /^ *(#{1,6}) *([^\n]+?) *#* *(?:\n+|$)/,
   lheading: /^([^\n]+)\n *(=|-){3,} *\n*/,
   blockquote: /^( *>[^\n]+(\n[^\n]+)*\n*)+/,
   list: /^( *)(bull) [^\0]+?(?:hr|\n{2,}(?! )(?!\1bull )\n*|\s*$)/,
   html: /^ *(?:comment|closed|closing) *(?:\n{2,}|\s*$)/,
   def: /^ *\[([^\]]+)\]: *([^\s]+)(?: +["(]([^\n]+)[")])? *(?:\n+|$)/,
+  plugin: /^ *\[([^\:\]]+):([^\]]+)\] *\n*/,
   paragraph: /^([^\n]+\n?(?!hr|heading|lheading|blockquote|tag|def))+\n*/,
   text: /^[^\n]+/
 };
@@ -53,12 +56,16 @@ block.paragraph = replace(block.paragraph)
 
 block.normal = {
   fences: block.fences,
-  paragraph: block.paragraph
+  paragraph: block.paragraph,
+  table: block.table,
+  nptable: block.nptable
 };
 
 block.gfm = {
   fences: /^ *(```|~~~) *(\w+)? *\n([^\0]+?)\s*\1 *(?:\n+|$)/,
-  paragraph: /^/
+  paragraph: /^/,
+  table: /^ {0,3}[|](.+)\n {0,3}[|]( *[-:]+[-| :]*)\n((?: *[|].*\n)*)\n*/,
+  nptable: /^ {0,3}(\S.*[|].*)\n {0,3}([-:]+ *[|][-| :]*)\n((?:.*[|].*\n)*)\n*/
 };
 
 block.gfm.paragraph = replace(block.paragraph)
@@ -123,6 +130,79 @@ block.token = function(src, tokens, top) {
         lang: cap[2],
         text: cap[3]
       });
+      continue;
+    }
+
+    // table (gfm)
+    if (cap = block.table.exec(src)) {
+      src = src.substring(cap[0].length);
+      tokens.push({
+        type: 'table',
+        header: cap[1].replace(/(^ *| *[|] *$)/g, '').split(/ *[|] */),
+        align: cap[2].replace(/(^ *|[|] *$)/g, '').split(/ *[|] */).map(function(row){
+          return row.match(/^ *-+: *$/) ? "right"
+            : row.match(/^ *:-+: *$/) ? "center"
+            : row.match(/^ *:-+ *$/) ? "left"
+            : false;
+        }),
+        cells: cap[3].replace(/( *[|] *)?\n$/, '').split("\n").map(function(row){
+          return row.replace(/(^ *[|] *| *[|] *$)/g, '').split(/ *[|] */);
+        })
+      });
+      continue;
+    }
+
+    // table no leading pipe (gfm)
+    if (cap = block.nptable.exec(src)) {
+      src = src.substring(cap[0].length);
+      tokens.push({
+        type: 'table',
+        header: cap[1].replace(/(^ *| *[|] *$)/g, '').split(/ *[|] */),
+        align: cap[2].replace(/(^ *|[|] *$)/g, '').split(/ *[|] */).map(function(row){
+          return row.match(/^ *-+: *$/) ? "right"
+            : row.match(/^ *:-+: *$/) ? "center"
+            : row.match(/^ *:-+ *$/) ? "left"
+            : false;
+        }),
+        cells: cap[3].replace(/\n$/, '').split("\n").map(function(row){
+          return row.split(/ *[|] */);
+        })
+      });
+      continue;
+    }
+
+    // table
+    if (cap = block.table.exec(src)) {
+      src = src.substring(cap[0].length);
+
+      tokens.push({
+        type: 'table_start'
+      });
+
+      var rows = cap[0].split(/\n+ *-+ *\n+/);
+      rows.forEach(function(row) {
+        tokens.push({
+          type: 'row_start'
+        });
+
+        var cols = row.split(' | ');
+        cols.forEach(function(col) {
+          //tokens.push({
+          //  type: 'cell', // or paragraph
+          //  text: col
+          //});
+          block.token(col, tokens, top);
+        });
+
+        tokens.push({
+          type: 'row_end'
+        });
+      });
+
+      tokens.push({
+        type: 'table_end'
+      });
+
       continue;
     }
 
@@ -255,6 +335,17 @@ block.token = function(src, tokens, top) {
       continue;
     }
 
+    // plugin
+    if (cap = block.plugin.exec(src)) {
+      src = src.substring(cap[0].length);
+      tokens.push({
+        type: 'plugin',
+        plugin: cap[1],
+        arg: cap[2]
+      });
+      continue;
+    }
+
     // def
     if (top && (cap = block.def.exec(src))) {
       src = src.substring(cap[0].length);
@@ -295,7 +386,7 @@ block.token = function(src, tokens, top) {
  */
 
 var inline = {
-  escape: /^\\([\\`*{}\[\]()#+\-.!_>])/,
+  escape: /^\\([\\`*{}\[\]()#+\-.!_>|])/,
   autolink: /^<([^ >]+(@|:\/)[^ >]+)>/,
   url: noop,
   tag: /^<!--[^\0]*?-->|^<\/?\w+(?:"[^"]*"|'[^']*'|[^'">])*?>/,
@@ -306,6 +397,7 @@ var inline = {
   em: /^\b_((?:__|[^\0])+?)_\b|^\*((?:\*\*|[^\0])+?)\*(?!\*)/,
   code: /^(`+)([^\0]*?[^`])\1(?!`)/,
   br: /^ {2,}\n(?!\s*$)/,
+  gfm_br: /^\n+(?!\s*$)/,
   text: /^[^\0]+?(?=[\\<!\[_*`]| {2,}\n|$)/
 };
 
@@ -335,7 +427,7 @@ inline.pedantic = {
 
 inline.gfm = {
   url: /^(https?:\/\/[^\s]+[^.,:;"')\]\s])/,
-  text: /^[^\0]+?(?=[\\<!\[_*`]|https?:\/\/| {2,}\n|$)/
+  text: /^[^\0]+?(?=[\\<!\[_*`]|https?:\/\/| {2,}\n|\n|$)/
 };
 
 /**
@@ -459,6 +551,13 @@ inline.lexer = function(src) {
       continue;
     }
 
+    // br (gfm)
+    if (cap = inline.gfm_br.exec(src)) {
+      src = src.substring(cap[0].length);
+      out += '<br>';
+      continue;
+    }
+
     // text
     if (cap = inline.text.exec(src)) {
       src = src.substring(cap[0].length);
@@ -549,6 +648,48 @@ function tok() {
         + token.text
         + '</code></pre>\n';
     }
+    case 'table': {
+      var thead = '\t<thead>\n\t\t<tr>';
+      token.header.forEach(function(heading, i){
+        heading = inline.lexer(heading);
+        var align = i < token.align.length ? token.align[i] : false;
+        switch(align){
+          case "left":
+          case "right":
+          case "center":
+            thead += '<th align="' + align + '">' + heading + '</td>';
+            break;
+          default:
+            thead += '<th>' + heading + '</th>';
+        }
+      });
+      thead += '</tr>\n\t</thead>\n';
+
+      var tbody = '\t<tbody>\n';
+      token.cells.forEach(function(row){
+        tbody += '\t\t<tr>';
+        row.forEach(function(cell, i){
+          cell = inline.lexer(cell);
+          var align = i < token.align.length ? token.align[i] : false;
+          switch(align){
+            case "left":
+            case "right":
+            case "center":
+              tbody += '<td align="' + align + '">' + cell + '</td>';
+              break;
+            default:
+              tbody += '<td>' + cell + '</td>';
+          }
+        });
+        tbody += '</tr>\n';
+      });
+      tbody += '\t</tbody>\n';
+
+      return '<table>\n'
+        + thead
+        + tbody
+        + '</table>\n'
+    }
     case 'blockquote_start': {
       var body = '';
 
@@ -605,6 +746,31 @@ function tok() {
         ? inline.lexer(token.text)
         : token.text;
     }
+    case 'table_start': {
+      var body = '';
+      while (next().type !== 'table_end') {
+        body += tok();
+      }
+      return '<table>\n'
+        + body
+        + '</table>\n';
+    }
+    case 'row_start': {
+      var body = '';
+      while (next().type !== 'row_end') {
+        body += '<td>'
+          + tok()
+          + '</td>\n';
+      }
+      return '<tr>\n'
+        + body
+        + '</tr>\n';
+    }
+    //case 'cell': {
+    //  return '<td>'
+    //    + inline.lexer(token.text)
+    //    + '</td>';
+    //}
     case 'paragraph': {
       return '<p>'
         + inline.lexer(token.text)
@@ -614,6 +780,14 @@ function tok() {
       return '<p>'
         + parseText()
         + '</p>\n';
+    }
+    case 'plugin': {
+      try {
+        return marked.plugins[token.plugin](token.arg)
+          + '\n';
+      } catch(e) {
+        return '<p><strong>Plugin error: ' + token.plugin + '</strong></p>\n';
+      }
     }
   }
 }
@@ -722,11 +896,15 @@ function setOptions(opt) {
   if (options.gfm) {
     block.fences = block.gfm.fences;
     block.paragraph = block.gfm.paragraph;
+    block.table = block.gfm.table;
+    block.nptable = block.gfm.nptable;
     inline.text = inline.gfm.text;
     inline.url = inline.gfm.url;
   } else {
     block.fences = block.normal.fences;
     block.paragraph = block.normal.paragraph;
+    block.table = block.normal.table;
+    block.nptable = block.normal.table;
     inline.text = inline.normal.text;
     inline.url = inline.normal.url;
   }
