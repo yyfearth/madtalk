@@ -640,7 +640,7 @@ function tok() {
 
       return '<pre><code'
         + (token.lang
-        ? ' class="lang-'
+        ? ' class="' // ' class="lang-' remove for hljs
         + token.lang
         + '"'
         : '')
