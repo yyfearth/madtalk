@@ -71,7 +71,6 @@ compile_stylus = (callback) ->
 
 compile_coffee = -> # sync
   build.coffee __dirname + '/scripts/client.coffee'
-    # minify: on
 # compile_coffee = (callback) -> # async
 #   build.coffee
 #     filename: __dirname + '/scripts/client.coffee'

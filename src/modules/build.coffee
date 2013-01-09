@@ -8,6 +8,7 @@ zlib = require 'zlib'
 xcoffee = require 'extra-coffee-script'
 coffeekup = require 'coffeekup'
 stylus = require 'stylus'
+{minify: uglify} = require 'uglify-js'
 {cssmin} = require 'cssmin'
 exists = fs.exists or path.exists
 existsSync = fs.existsSync or path.existsSync
@@ -285,14 +286,33 @@ _coffee = (filename, {minify, callback} = {}) ->
   opt =
     filename: path.resolve filename
     imports: on
-    # header: header
-    minify: minify ? off
   if callback? # async (callback is not func means no callback)
-    async.nextTick -> callback? xcoffee.compile code, opt
+    async.nextTick ->
+      code = xcoffee.compile code, opt
+      if minify
+        _minify code, callback
+      else
+        callback code
     return
   else
-    xcoffee.compile code, opt
+    code = xcoffee.compile code, opt
+    code = _minify code if minify
+    code
 # end of build coffee
+_minify = (code, options = {}, callback) ->
+  if typeof options is 'function'
+    callback = options
+    options = {}
+  if callback? # async
+    async.nextTick -> callback _minify code, options
+    return
+  else
+    result = uglify code, fromString: true, compress: options
+    result.code
+    # result.code.replace /[^\0-\xff]/g, (ch) ->
+    #   chr = ch.charCodeAt(0).toString(16)
+    #   '\\u' + if chr.length < 4 then '0' + chr else chr
+# end of uglify js
 _coffeekup = (filename, options = {}, callback) ->
   throw 'need filename' unless filename
   callback = cb if not callback? and typeof (cb = options.callback or options) is 'function'
@@ -354,6 +374,7 @@ module.exports = {
   coffee: _coffee
   coffeekup: _coffeekup
   stylus: _stylus
+  minify: _minify
   load_pkg
   build_pkg
 }

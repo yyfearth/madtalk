@@ -37,6 +37,7 @@
 	"devDependencies": {
 		"express": "2.x",
 		"extra-coffee-script": "latest",
+		"uglify-js": "~2.2",
 		"stylus": ">=0.19.0",
 		"coffeekup": ">=0.3.1",
 		"cssmin": "latest",
