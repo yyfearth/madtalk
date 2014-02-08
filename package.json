@@ -3,7 +3,7 @@
 	"subdomain": "madtalk",
 	"domains": [
 		"madtalk.yyfearth.com",
-		"madtalk.myyapps.com"
+		"madtalk.wilsonstart.com"
 	],
 	"description": "MadTalk",
 	"keywords": [
@@ -29,10 +29,10 @@
 	"main": "app.js",
 	"license": "MIT",
 	"engines": {
-		"node": "0.6.x || 0.8.x"
+		"node": "0.8.x || 0.10.x"
 	},
 	"dependencies": {
-		"socket.io": "latest"
+		"socket.io": "0.9.x"
 	},
 	"devDependencies": {
 		"express": "2.x",
