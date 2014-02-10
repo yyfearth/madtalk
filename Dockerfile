@@ -9,7 +9,8 @@ RUN echo "deb http://archive.ubuntu.com/ubuntu precise main universe\ndeb http:/
 RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys C7917B12 && \
 	apt-get update && \
 	apt-get upgrade -y && \
-	apt-get install -y build-essential nodejs
+	apt-get install -y build-essential nodejs && \
+	apt-get clean
 
 # deploy
 RUN mkdir /app
